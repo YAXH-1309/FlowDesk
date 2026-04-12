@@ -11,14 +11,14 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Create root `build.gradle` (or `pom.xml`) with dependency management for Spring Boot 3.x, jqwik, Testcontainers, HikariCP, Caffeine, Kafka, jOOQ/JPA
     - Define module boundaries: each module has its own `src/main/java` package under `com.flowdesk.{module}`
     - _Requirements: 4.1, 4.3_
-  - [-] 1.2 Implement shared `core` library
+  - [x] 1.2 Implement shared `core` library
     - Create `BaseEntity` with `id` (UUID), `tenantId` (UUID), `createdAt`, `updatedAt`
     - Create `TenantContext` thread-local holder populated from JWT by a servlet filter
     - Create `GlobalExceptionHandler` (`@ControllerAdvice`) mapping all exception types to the standard error envelope JSON
     - Create `ValidationException`, `AuthenticationException`, `AccessDeniedException`, `ResourceNotFoundException`, `ConflictException`, `RateLimitExceededException`, `BusinessRuleException`, `ServiceUnavailableException`
     - Create structured JSON logging configuration (Logback + logstash-logback-encoder) with fields: `timestamp`, `level`, `service`, `traceId`, `message`
     - _Requirements: 4.5, 13.3, 17.1_
-  - [~] 1.3 Set up PostgreSQL schemas and Flyway migrations for all modules
+  - [-] 1.3 Set up PostgreSQL schemas and Flyway migrations for all modules
     - Create Flyway migration scripts for: `core_schema`, `task_schema`, `hr_schema`, `inventory_schema`, `accounting_schema`, `sales_schema`, `reporting_schema`
     - Include all DDL from the design document (tables, indexes, partitions, constraints)
     - Revoke UPDATE/DELETE on `core_schema.audit_log` for all application roles
