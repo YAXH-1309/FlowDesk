@@ -1,0 +1,10 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':core')
+
+    // Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+}

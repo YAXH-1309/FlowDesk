@@ -1,0 +1,4 @@
+// core is a shared library — no Spring Boot main class
+dependencies {
+    // All dependencies inherited from root subprojects block
+}

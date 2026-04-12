@@ -1,0 +1,413 @@
+# Implementation Plan: Flowdesk SaaS Platform
+
+## Overview
+
+Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React frontend. Tasks are ordered to build foundational layers first (core library, auth, data layer) before domain modules, then infrastructure, observability, and frontend. Each task builds on the previous and ends with all components wired together.
+
+## Tasks
+
+- [-] 1. Set up project structure and shared core library
+  - [x] 1.1 Initialize Spring Boot multi-module Maven/Gradle project with modules: `core`, `auth`, `task`, `hr`, `inventory`, `accounting`, `sales`, `reporting`
+    - Create root `build.gradle` (or `pom.xml`) with dependency management for Spring Boot 3.x, jqwik, Testcontainers, HikariCP, Caffeine, Kafka, jOOQ/JPA
+    - Define module boundaries: each module has its own `src/main/java` package under `com.flowdesk.{module}`
+    - _Requirements: 4.1, 4.3_
+  - [-] 1.2 Implement shared `core` library
+    - Create `BaseEntity` with `id` (UUID), `tenantId` (UUID), `createdAt`, `updatedAt`
+    - Create `TenantContext` thread-local holder populated from JWT by a servlet filter
+    - Create `GlobalExceptionHandler` (`@ControllerAdvice`) mapping all exception types to the standard error envelope JSON
+    - Create `ValidationException`, `AuthenticationException`, `AccessDeniedException`, `ResourceNotFoundException`, `ConflictException`, `RateLimitExceededException`, `BusinessRuleException`, `ServiceUnavailableException`
+    - Create structured JSON logging configuration (Logback + logstash-logback-encoder) with fields: `timestamp`, `level`, `service`, `traceId`, `message`
+    - _Requirements: 4.5, 13.3, 17.1_
+  - [~] 1.3 Set up PostgreSQL schemas and Flyway migrations for all modules
+    - Create Flyway migration scripts for: `core_schema`, `task_schema`, `hr_schema`, `inventory_schema`, `accounting_schema`, `sales_schema`, `reporting_schema`
+    - Include all DDL from the design document (tables, indexes, partitions, constraints)
+    - Revoke UPDATE/DELETE on `core_schema.audit_log` for all application roles
+    - _Requirements: 20.1, 20.4, 13.4_
+  - [~] 1.4 Configure HikariCP connection pool with primary + 3 read-replica routing
+    - Define `DataSourceConfig` with a primary `DataSource` and a `ReadReplicaRoutingDataSource` that round-robins across 3 replicas
+    - Annotate read-only service methods with `@Transactional(readOnly = true)` to route to replicas
+    - Configure pool sizes for 10,000 concurrent users target
+    - _Requirements: 20.2, 20.3_
+  - [ ]* 1.5 Write integration test for read/write routing
+    - Verify read queries use replica connections and write queries use primary
+    - _Requirements: 20.3_
+
+- [ ] 2. Implement Auth Service (JWT, OAuth2/SAML, RBAC)
+  - [ ] 2.1 Implement user registration and password hashing
+    - Create `POST /api/v1/auth/register` endpoint accepting `{ email, password }`
+    - Hash passwords with bcrypt cost factor >= 12 using Spring Security `BCryptPasswordEncoder`
+    - Persist user to `core_schema.users`; return 409 on duplicate email
+    - Return signed JWT (24-hour expiry) on success
+    - _Requirements: 1.1, 1.4, 1.7_
+  - [ ]* 2.2 Write property test P1: Registration produces a valid JWT for any valid credential
+    - **Property 1: Registration produces a valid JWT for any valid credential**
+    - **Validates: Requirements 1.1, 1.7**
+    - Use `@ForAll @Email String email` and `@ForAll @StringLength(min=8) String password` generators
+    - Assert JWT is returned with 24-hour expiry; assert stored value is bcrypt hash, not plaintext
+  - [ ]* 2.3 Write property test P16: Password hashing is irreversible
+    - **Property 16: Password hashing is irreversible**
+    - **Validates: Requirements 1.7**
+    - For arbitrary password strings, assert stored hash is never equal to plaintext and verifies correctly via bcrypt comparison
+  - [ ] 2.4 Implement login, refresh token, and logout
+    - Create `POST /api/v1/auth/login` returning JWT + HttpOnly refresh token cookie
+    - Create `POST /api/v1/auth/refresh` validating refresh token and issuing new JWT
+    - Create `POST /api/v1/auth/logout` invalidating refresh token (204)
+    - Return same "Invalid credentials" message for wrong email or wrong password
+    - _Requirements: 1.2, 1.3, 1.5, 1.6_
+  - [ ]* 2.5 Write property test P2: Login is a round-trip of registration
+    - **Property 2: Login is a round-trip of registration**
+    - **Validates: Requirements 1.2, 1.5**
+    - For any registered user, assert login returns valid JWT and sets HttpOnly cookie; assert wrong password returns 401 with same message
+  - [ ]* 2.6 Write property test P3: Refresh token issues a new JWT
+    - **Property 3: Refresh token issues a new JWT**
+    - **Validates: Requirements 1.6**
+    - For any valid refresh token from login, assert refresh endpoint returns new valid JWT without re-authentication
+  - [ ] 2.7 Implement OAuth2 and SAML 2.0 integration
+    - Configure Spring Security OAuth2 client for `GET /api/v1/auth/oauth2/callback`
+    - Configure Spring Security SAML for `POST /api/v1/auth/saml/acs`
+    - Map external identity to internal user/tenant on first login
+    - _Requirements: 1.8_
+  - [ ] 2.8 Implement RBAC enforcement as a Spring Security filter
+    - Define roles: `VIEWER`, `MEMBER`, `ADMIN`, `HR_ADMIN`, `MANAGER`, `FINANCE`, `SALES_REP`
+    - Annotate all protected endpoints with `@PreAuthorize` or a custom `@RequiresRole` annotation
+    - Reject VIEWER write attempts and cross-tenant access with HTTP 403
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
+  - [ ]* 2.9 Write property test P4: RBAC enforcement is universal across all protected endpoints
+    - **Property 4: RBAC enforcement is universal across all protected endpoints**
+    - **Validates: Requirements 2.2, 2.5, 2.6**
+    - Generate endpoint × role matrix; assert any role lacking required permission receives 403; assert VIEWER always receives 403 on write operations
+
+- [ ] 3. Checkpoint — Ensure auth tests pass, ask the user if questions arise.
+
+- [ ] 4. Implement Audit Log and Transactional Outbox (core infrastructure)
+  - [ ] 4.1 Implement immutable audit log writer
+    - Create `AuditLogService` that inserts into `core_schema.audit_log` with actor, action, entity type, entity ID, timestamp, before/after snapshots
+    - Expose as a Spring bean consumed by all modules via an `@AuditLog` AOP aspect on service methods
+    - Verify UPDATE/DELETE are revoked on the audit_log table in migration
+    - _Requirements: 13.3, 13.4_
+  - [ ]* 4.2 Write property test P15: Audit log completeness and immutability
+    - **Property 15: Audit log completeness and immutability**
+    - **Validates: Requirements 13.3, 13.4**
+    - For random CRUD operations across all modules, assert audit entry is created with all required fields; assert any attempt to UPDATE/DELETE an audit row is rejected
+  - [ ] 4.3 Implement transactional outbox per module schema
+    - Create `OutboxEventRepository` writing to `{module}_schema.outbox_events` within the same transaction as the business write
+    - Implement `OutboxRelayScheduler` that polls unpublished rows, publishes to Kafka, and marks `published_at`
+    - Configure idempotent Kafka producer (`enable.idempotence=true`)
+    - _Requirements: 12.5_
+  - [ ]* 4.4 Write property test P14: Transactional outbox atomicity
+    - **Property 14: Transactional outbox atomicity**
+    - **Validates: Requirements 12.5**
+    - Simulate crash at commit boundary; assert either both DB write and outbox entry are committed or neither is; assert no event published for rolled-back transaction
+
+- [ ] 5. Implement two-level cache (Caffeine L1 + Redis L2)
+  - [ ] 5.1 Implement `CacheService` with L1 → L2 → DB lookup chain
+    - Configure Caffeine caches with per-region max size and TTL via `CacheConfig`
+    - Configure Redis Cluster client (Lettuce) with per-region TTL
+    - Implement `get(key, loader)` that checks L1, then L2, then invokes loader (DB query), populating both levels on miss
+    - On Redis unavailability, catch exception, log WARN, fall through to L1/DB
+    - _Requirements: 11.1, 11.2, 11.3, 11.5_
+  - [ ] 5.2 Implement cache invalidation on entity writes
+    - Evict L1 and L2 entries within the same transaction commit callback (Spring `TransactionSynchronizationManager`)
+    - _Requirements: 11.4_
+  - [ ] 5.3 Expose cache metrics to Prometheus
+    - Register Caffeine and Redis hit rate, miss rate, and eviction count as Micrometer meters
+    - _Requirements: 11.6_
+  - [ ]* 5.4 Write property test P11: Cache lookup order is L1 → L2 → database
+    - **Property 11: Cache lookup order is L1 → L2 → database**
+    - **Validates: Requirements 11.3, 11.5**
+    - Mock L1/L2/DB with configurable hit/miss scenarios; assert lookup order; assert Redis failure does not propagate error to caller
+  - [ ]* 5.5 Write property test P12: Cache invalidation is consistent after writes
+    - **Property 12: Cache invalidation is consistent after writes**
+    - **Validates: Requirements 11.4**
+    - For any entity update, assert L1 and L2 entries are invalidated within 1 second; assert subsequent read reflects updated state
+
+- [ ] 6. Implement Kafka event bus and dead-letter routing
+  - [ ] 6.1 Configure Kafka topics and consumer groups
+    - Define all topics from the design (replication factor 3, min.insync.replicas=2): `hr.employee.changed`, `hr.review.submitted`, `inventory.low-stock`, `sales.order.confirmed`, `sales.credit-hold`, `accounting.invoice.overdue`, `audit.events`, and DLQ topics
+    - Configure schema registry validation for all event types
+    - _Requirements: 12.1, 12.4_
+  - [ ] 6.2 Implement consumer retry and dead-letter routing
+    - Configure exponential backoff retry: 1s, 2s, 4s (3 attempts)
+    - After 3 failures, route to `{consumer}.dlq` topic with original topic/partition/offset/failure reason in headers
+    - _Requirements: 12.2, 12.3_
+  - [ ]* 6.3 Write property test P13: Dead-letter routing after exhausted retries
+    - **Property 13: Dead-letter routing after exhausted retries**
+    - **Validates: Requirements 12.3**
+    - Simulate failing consumer; assert message routes to DLQ after exactly 3 retries; assert message is not redelivered to main topic
+
+- [ ] 7. Implement Task Module
+  - [ ] 7.1 Implement project CRUD
+    - Create `POST /api/v1/tasks/projects` and `GET /api/v1/tasks/projects` (tenant-scoped)
+    - Persist to `task_schema.projects`; inject `tenantId` from `TenantContext`
+    - _Requirements: 3.1, 3.5, 19.2_
+  - [ ] 7.2 Implement task CRUD with soft-delete
+    - Create `POST /api/v1/tasks/projects/{id}/tasks`, `GET /api/v1/tasks/projects/{id}/tasks`, `PUT /api/v1/tasks/tasks/{id}`, `DELETE /api/v1/tasks/tasks/{id}` (soft-delete sets `deleted_at`)
+    - Validate project exists and belongs to tenant; return 404 for non-existent project
+    - Enforce status values: `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`
+    - _Requirements: 3.2, 3.3, 3.4, 3.6, 3.8_
+  - [ ]* 7.3 Write property test P5: Resource creation is a round-trip
+    - **Property 5: Resource creation is a round-trip**
+    - **Validates: Requirements 3.1, 3.2**
+    - For random project/task data, assert created resource contains all submitted fields with assigned ID and HTTP 201
+  - [ ]* 7.4 Write property test P6: Task updates are reflected in subsequent reads
+    - **Property 6: Task updates are reflected in subsequent reads**
+    - **Validates: Requirements 3.3**
+    - For any existing task and random valid field updates, assert subsequent GET reflects updated values
+  - [ ] 7.5 Implement task assignment with cross-tenant validation
+    - Create `PUT /api/v1/tasks/tasks/{id}/assign { assigneeId }`
+    - Validate assignee belongs to same tenant; return 422 with "Assignee does not belong to this tenant" if not
+    - _Requirements: 3.7_
+  - [ ]* 7.6 Write property test P8: Cross-tenant assignment is rejected
+    - **Property 8: Cross-tenant assignment is rejected**
+    - **Validates: Requirements 3.7**
+    - For any task assignment where assignee belongs to a different tenant, assert request is rejected with descriptive error
+
+- [ ] 8. Checkpoint — Ensure task module tests pass, ask the user if questions arise.
+
+- [ ] 9. Implement tenant isolation enforcement
+  - [ ] 9.1 Add tenant filter to all module repository queries
+    - Implement a JPA `@Filter` or query interceptor that appends `AND tenant_id = :tenantId` to all queries using `TenantContext`
+    - Return 403 (not 404) for cross-tenant resource access attempts
+    - _Requirements: 19.1, 19.2, 19.3, 19.4_
+  - [ ]* 9.2 Write property test P7: Tenant isolation — queries never return cross-tenant data
+    - **Property 7: Tenant isolation — queries never return cross-tenant data**
+    - **Validates: Requirements 3.5, 19.2, 19.3**
+    - Generate multi-tenant resources; assert any query returns only requesting tenant's data; assert cross-tenant access returns 403 without revealing resource existence
+
+- [ ] 10. Implement HR Module
+  - [ ] 10.1 Implement employee record management
+    - Create `POST /api/v1/hr/employees` and `PUT /api/v1/hr/employees/{id}`
+    - Persist to `hr_schema.employees`; publish `hr.employee.changed` event via outbox within 500ms
+    - _Requirements: 5.1, 5.2_
+  - [ ] 10.2 Implement attendance recording
+    - Create `POST /api/v1/hr/attendance` persisting to partitioned `hr_schema.attendance`
+    - Validate status values: `PRESENT`, `ABSENT`, `LATE`, `ON_LEAVE`
+    - _Requirements: 5.3_
+  - [ ] 10.3 Implement payroll run calculation
+    - Create `POST /api/v1/hr/payroll/run { payPeriodStart, payPeriodEnd }` and `GET /api/v1/hr/payroll/{runId}/report`
+    - Calculate gross pay, statutory deductions, net pay for all active employees in period
+    - Exclude employees with missing compensation data and include them in a validation error report
+    - _Requirements: 5.4, 5.5_
+  - [ ]* 10.4 Write property test P20: Payroll calculation correctness
+    - **Property 20: Payroll calculation correctness**
+    - **Validates: Requirements 5.4**
+    - For any set of active employees with complete compensation data, assert net pay = gross pay − total deductions for every employee in the run
+  - [ ] 10.5 Implement performance reviews
+    - Create `POST /api/v1/hr/reviews` persisting to `hr_schema.performance_reviews`
+    - Publish `hr.review.submitted` event via outbox within 1 second
+    - _Requirements: 5.6, 5.7_
+
+- [ ] 11. Implement Inventory Module
+  - [ ] 11.1 Implement SKU and stock management
+    - Create `POST /api/v1/inventory/skus` and `PUT /api/v1/inventory/skus/{id}/stock`
+    - Use optimistic locking (`@Version`) on `inventory_schema.stock` to prevent lost updates
+    - After stock update, check if `quantity_on_hand <= reorder_threshold`; if so, publish `inventory.low-stock` via outbox
+    - _Requirements: 6.1, 6.2_
+  - [ ]* 11.2 Write property test P19: Low-stock events are published for any threshold-crossing transaction
+    - **Property 19: Low-stock events are published for any threshold-crossing transaction**
+    - **Validates: Requirements 6.2**
+    - For any stock update resulting in quantity <= reorder threshold, assert low-stock event is published within 1 minute
+  - [ ] 11.3 Implement purchase orders with line item validation
+    - Create `POST /api/v1/inventory/purchase-orders` and `PUT /api/v1/inventory/purchase-orders/{id}/receive`
+    - Validate all SKU IDs exist before persisting; reject entire order if any SKU not found
+    - On receive: update stock quantities and record receipt timestamp in same DB transaction
+    - _Requirements: 6.3, 6.4, 6.5_
+  - [ ] 11.4 Implement supplier records and warehouse management
+    - Create `GET /api/v1/inventory/warehouses` and supplier CRUD endpoints
+    - Persist to `inventory_schema` with per-warehouse stock quantities
+    - _Requirements: 6.6, 6.7_
+
+- [ ] 12. Implement Accounting Module
+  - [ ] 12.1 Implement double-entry journal entries
+    - Create `POST /api/v1/accounting/journal-entries`
+    - Validate `SUM(line.amount) == 0` before persisting; reject with 422 and imbalance amount if not
+    - Update account balances atomically in same transaction using `SELECT FOR UPDATE`
+    - _Requirements: 7.1, 7.2, 7.3_
+  - [ ]* 12.2 Write property test P9: Double-entry ledger invariant
+    - **Property 9: Double-entry ledger invariant**
+    - **Validates: Requirements 7.1, 7.3**
+    - For random balanced entries, assert posting succeeds; for imbalanced entries, assert 422 with imbalance amount in message
+  - [ ] 12.3 Implement account balance queries and financial reports
+    - Create `GET /api/v1/accounting/accounts/{id}/balance`, `GET /api/v1/accounting/reports/trial-balance`, `GET /api/v1/accounting/reports/income-statement`, `GET /api/v1/accounting/reports/balance-sheet`
+    - Route all report queries to read replicas
+    - _Requirements: 7.2, 7.8_
+  - [ ] 12.4 Implement AP/AR invoice tracking
+    - Create `POST /api/v1/accounting/ap/invoices` and `POST /api/v1/accounting/ar/invoices`
+    - Track AP statuses: `RECEIVED`, `APPROVED`, `SCHEDULED`, `PAID`, `DISPUTED`
+    - Track AR statuses: `DRAFT`, `SENT`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`
+    - Publish `accounting.invoice.overdue` event via outbox within 1 hour of due date passing
+    - _Requirements: 7.4, 7.5, 7.6_
+  - [ ] 12.5 Implement budget tracking
+    - Create budget records per cost center and fiscal period with allocated, committed, and actual spend fields
+    - _Requirements: 7.7_
+
+- [ ] 13. Checkpoint — Ensure accounting and inventory tests pass, ask the user if questions arise.
+
+- [ ] 14. Implement Sales Module
+  - [ ] 14.1 Implement customer record management
+    - Create `POST /api/v1/sales/customers` persisting to `sales_schema.customers` with credit limit and payment terms
+    - _Requirements: 8.1_
+  - [ ] 14.2 Implement opportunity pipeline with closed-won automation
+    - Create `POST /api/v1/sales/opportunities` and `PUT /api/v1/sales/opportunities/{id}`
+    - On transition to `CLOSED_WON`, automatically create a linked sales order within 5 seconds (async via application event or scheduled task)
+    - _Requirements: 8.2, 8.3_
+  - [ ]* 14.3 Write property test P18: Opportunity closed-won triggers order creation
+    - **Property 18: Opportunity closed-won triggers order creation**
+    - **Validates: Requirements 8.3**
+    - For any opportunity transitioned to CLOSED_WON, assert linked sales order is created within 5 seconds
+  - [ ] 14.4 Implement sales orders with credit hold logic
+    - Create `POST /api/v1/sales/orders`, `PUT /api/v1/sales/orders/{id}/confirm`, `POST /api/v1/sales/orders/{id}/invoice`
+    - On confirm, publish `sales.order.confirmed` event via outbox within 500ms
+    - Check customer outstanding balance + order value against credit limit; if exceeded, set `credit_hold = true` and publish `sales.credit-hold` event
+    - _Requirements: 8.4, 8.5, 8.6, 8.7_
+  - [ ]* 14.5 Write property test P17: Sales credit hold is applied for any order exceeding credit limit
+    - **Property 17: Sales credit hold is applied for any order exceeding credit limit**
+    - **Validates: Requirements 8.7**
+    - For any order where outstanding balance + order value > credit limit, assert order is placed on credit hold and notification event is published
+  - [ ] 14.6 Implement customer interaction recording
+    - Create `POST /api/v1/sales/interactions` persisting calls, emails, meetings linked to customer or opportunity with timestamp and author
+    - _Requirements: 8.8_
+
+- [ ] 15. Implement Reporting Module and Elasticsearch integration
+  - [ ] 15.1 Implement pre-built dashboards per module
+    - Create `GET /api/v1/reporting/dashboards/{module}` returning key metrics refreshed at <= 5 minutes
+    - Cache dashboard results in Redis with 5-minute TTL
+    - _Requirements: 9.1, 18.1, 18.2_
+  - [ ] 15.2 Implement custom report definition and execution
+    - Create `POST /api/v1/reporting/reports` (define report) and `POST /api/v1/reporting/reports/{id}/execute`
+    - Execute against read replicas; return results within 10 seconds for up to 100,000 rows
+    - Enforce RBAC: filter results to only resources the requesting user is authorized to view
+    - _Requirements: 9.2, 9.3, 9.7_
+  - [ ] 15.3 Implement async data export (CSV/XLSX)
+    - Create `GET /api/v1/reporting/reports/{id}/export`
+    - For result sets > 10,000 rows, process asynchronously and notify user via event when file is ready; store export in S3
+    - _Requirements: 9.4, 9.5_
+  - [ ] 15.4 Implement Elasticsearch full-text search
+    - Configure Elasticsearch client and index mappings for all module entities
+    - Create `GET /api/v1/reporting/search?q=...` returning results within 500ms for indexed datasets
+    - Sync data to Elasticsearch via Kafka consumer on entity change events
+    - _Requirements: 9.6_
+
+- [ ] 16. Implement API Gateway rate limiting
+  - [ ] 16.1 Implement sliding window rate limiter using Redis
+    - Implement `RateLimitFilter` using Redis with key `rate:{userId}` (100 req/min) and `rate:ip:{ip}` (20 req/min for unauthenticated)
+    - Return 429 with `Retry-After` header on limit exceeded
+    - TTL on Redis key equals window duration (60 seconds)
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+  - [ ]* 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
+    - **Property 10: Rate limiting enforces sliding window with correct HTTP response**
+    - **Validates: Requirements 10.1, 10.3, 10.4**
+    - Generate request bursts exceeding 100/min; assert all requests beyond limit receive 429 with Retry-After; assert sliding window correctly counts at boundaries
+  - [ ] 16.3 Configure versioned REST endpoints and OpenAPI spec
+    - Ensure all endpoints follow `/api/v1/` pattern
+    - Configure SpringDoc OpenAPI 3.0 to auto-generate spec from annotations, kept in sync with implementation
+    - _Requirements: 10.6, 10.7_
+
+- [ ] 17. Checkpoint — Ensure all module tests pass, ask the user if questions arise.
+
+- [ ] 18. Implement observability (Prometheus, Grafana, ELK, Jaeger)
+  - [ ] 18.1 Configure Micrometer + Prometheus metrics endpoint
+    - Expose `/metrics` in Prometheus format via Spring Boot Actuator
+    - Register custom meters: request rate, error rate, latency percentiles (P50, P95, P99), JVM heap, cache hit rates
+    - _Requirements: 17.4_
+  - [ ] 18.2 Configure Jaeger distributed tracing
+    - Add OpenTelemetry Java agent or Micrometer Tracing with Jaeger exporter
+    - Propagate `traceId` header across all inter-module calls
+    - Capture full stack trace on unhandled exceptions and associate with active `traceId`
+    - _Requirements: 17.2, 17.3_
+  - [ ] 18.3 Implement `/health` endpoint
+    - Create Spring Boot Actuator health endpoint checking: PostgreSQL, Redis, Kafka, Elasticsearch
+    - Return HTTP 200 when all healthy, HTTP 503 when any degraded
+    - _Requirements: 17.8_
+  - [ ] 18.4 Configure slow query logging
+    - Set Hibernate/JDBC slow query threshold to 20ms; log query text, parameters, and execution plan
+    - _Requirements: 20.7_
+
+- [ ] 19. Set up Docker Compose for local development
+  - [ ] 19.1 Write `docker-compose.yml` with all services
+    - Define services: `backend` (Spring Boot), `frontend` (React/Nginx), `postgres` (primary + 3 replicas), `redis` (cluster), `kafka` (3 brokers + Zookeeper/KRaft), `elasticsearch`, `prometheus`, `grafana`, `jaeger`
+    - Add health checks for backend, Redis, and Kafka
+    - Use named volumes for postgres and Redis data persistence
+    - Configure auto-restart on 3 consecutive health check failures for backend
+    - _Requirements: 15.1, 15.2, 15.4, 15.5, 15.6_
+  - [ ] 19.2 Write multi-stage Dockerfiles for backend and frontend
+    - Backend: build stage (JDK + Gradle/Maven) → runtime stage (JRE slim), target < 200MB
+    - Frontend: build stage (Node) → runtime stage (Nginx alpine), target < 200MB
+    - _Requirements: 15.3_
+
+- [ ] 20. Write Terraform IaC for AWS infrastructure
+  - [ ] 20.1 Define EKS cluster, RDS, ElastiCache, MSK, ECR, S3 in Terraform
+    - Create Terraform modules for: EKS cluster, RDS PostgreSQL Multi-AZ + 3 read replicas, ElastiCache Redis cluster, Amazon MSK (Kafka), ECR registry, S3 buckets (exports, backups)
+    - Configure ACM TLS 1.3 certificates and Secrets Manager for all secrets
+    - No manually provisioned resources; all infra defined in code
+    - _Requirements: 21.1, 21.4, 13.7_
+  - [ ] 20.2 Define Kubernetes manifests (Deployments, HPA, NetworkPolicies)
+    - Create Deployment/StatefulSet per module with resource requests, limits, liveness probes, readiness probes
+    - Configure HPA per module (CPU-based, scale within 3 minutes)
+    - Define NetworkPolicies restricting inter-pod communication to explicitly allowed paths
+    - _Requirements: 21.5, 21.6, 21.7, 22.5_
+
+- [ ] 21. Set up GitHub Actions CI/CD pipeline
+  - [ ] 21.1 Implement PR validation workflow
+    - On PR to main: run compilation, unit tests, integration tests, SAST (Semgrep/SpotBugs), DAST (OWASP ZAP against staging)
+    - Block merge on: compile errors, test failures, critical/high security findings
+    - Complete within 10 minutes; cache dependency layers between runs
+    - _Requirements: 16.1, 16.2, 16.7, 13.6_
+  - [ ] 21.2 Implement main branch build and push workflow
+    - On merge to main: build Docker images, tag with commit SHA, push to ECR
+    - Run JMeter performance tests against staging; block promotion if P95 > 100ms or error rate > 0.1%
+    - _Requirements: 16.3, 16.6_
+  - [ ] 21.3 Implement blue-green deployment workflow
+    - Deploy to inactive environment (blue/green), run health checks on all pods
+    - Switch traffic only after health checks pass; auto-rollback within 5 minutes on failure
+    - Deploy to production only from main branch after all stages pass
+    - _Requirements: 16.4, 16.5, 21.8_
+
+- [ ] 22. Implement React frontend
+  - [ ] 22.1 Initialize React SPA with route-based code splitting
+    - Set up React + TypeScript + Vite (or CRA) with React Router
+    - Implement route-based lazy loading; ensure each route bundle < 200KB gzipped
+    - Configure CDN asset serving (CloudFront or similar)
+    - _Requirements: 14.1, 14.2_
+  - [ ] 22.2 Implement authentication UI and JWT handling
+    - Create login, registration, and OAuth2 redirect pages
+    - Store JWT in memory (not localStorage); use HttpOnly cookie for refresh token
+    - Show loading indicator within 100ms on route navigation
+    - _Requirements: 14.3, 1.1, 1.2_
+  - [ ] 22.3 Implement Task module UI
+    - Create project list, project detail, task board (Kanban-style) views
+    - Implement optimistic UI updates for task status changes; revert to server state on API failure
+    - _Requirements: 14.5, 3.1, 3.2, 3.3_
+  - [ ] 22.4 Implement HR module UI
+    - Create employee list/detail, attendance entry, payroll run, and performance review views
+    - _Requirements: 5.1, 5.3, 5.4, 5.6_
+  - [ ] 22.5 Implement Inventory module UI
+    - Create SKU list, stock adjustment, purchase order, supplier, and warehouse views
+    - _Requirements: 6.1, 6.3, 6.6, 6.7_
+  - [ ] 22.6 Implement Accounting module UI
+    - Create journal entry form, account balance view, AP/AR invoice lists, financial report views (trial balance, income statement, balance sheet)
+    - _Requirements: 7.1, 7.4, 7.5, 7.8_
+  - [ ] 22.7 Implement Sales module UI
+    - Create customer list/detail, opportunity pipeline (Kanban), order management, invoice generation, and interaction log views
+    - _Requirements: 8.1, 8.2, 8.4, 8.6, 8.8_
+  - [ ] 22.8 Implement Reporting and Analytics dashboard UI
+    - Create per-module dashboards refreshing every 30 seconds without full page reload
+    - Implement custom report builder, export trigger, and full-text search UI
+    - Restrict analytics dashboard to ADMIN role
+    - _Requirements: 9.1, 9.2, 9.4, 18.1, 18.2, 18.3, 18.4_
+  - [ ] 22.9 Configure frontend error reporting and Lighthouse CI
+    - Report JavaScript runtime errors to monitoring system within 5 seconds
+    - Configure Lighthouse CI in pipeline to assert LCP < 2.5s and bundle size < 200KB gzipped per route
+    - _Requirements: 14.4, 17.7_
+
+- [ ] 23. Final checkpoint — Ensure all tests pass and all components are wired together, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for a faster MVP
+- Each task references specific requirements for traceability
+- All 20 correctness properties are covered by property-based tests using jqwik (tagged with `@Tag("Feature: saas-platform, Property N: ...")`)
+- Property tests run a minimum of 100 iterations with randomized inputs
+- Checkpoints ensure incremental validation at logical boundaries
+- All secrets must be loaded from AWS Secrets Manager — never hardcoded
+- TLS 1.3 must be enforced at the ALB/Nginx layer; HTTP → HTTPS redirect returns 301

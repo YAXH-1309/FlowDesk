@@ -1,0 +1,10 @@
+rootProject.name = 'flowdesk'
+
+include 'core'
+include 'auth'
+include 'task'
+include 'hr'
+include 'inventory'
+include 'accounting'
+include 'sales'
+include 'reporting'
