@@ -28,12 +28,12 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Annotate read-only service methods with `@Transactional(readOnly = true)` to route to replicas
     - Configure pool sizes for 10,000 concurrent users target
     - _Requirements: 20.2, 20.3_
-  - [ ]1.5 Write integration test for read/write routing
+  - [x] 1.5 Write integration test for read/write routing
     - Verify read queries use replica connections and write queries use primary
     - _Requirements: 20.3_
 
-- [ ] 2. Implement Auth Service (JWT, OAuth2/SAML, RBAC)
-  - [ ] 2.1 Implement user registration and password hashing
+- [-] 2. Implement Auth Service (JWT, OAuth2/SAML, RBAC)
+  - [-] 2.1 Implement user registration and password hashing
     - Create `POST /api/v1/auth/register` endpoint accepting `{ email, password }`
     - Hash passwords with bcrypt cost factor >= 12 using Spring Security `BCryptPasswordEncoder`
     - Persist user to `core_schema.users`; return 409 on duplicate email
@@ -48,7 +48,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - **Property 16: Password hashing is irreversible**
     - **Validates: Requirements 1.7**
     - For arbitrary password strings, assert stored hash is never equal to plaintext and verifies correctly via bcrypt comparison
-  - [ ] 2.4 Implement login, refresh token, and logout
+  - [~] 2.4 Implement login, refresh token, and logout
     - Create `POST /api/v1/auth/login` returning JWT + HttpOnly refresh token cookie
     - Create `POST /api/v1/auth/refresh` validating refresh token and issuing new JWT
     - Create `POST /api/v1/auth/logout` invalidating refresh token (204)
@@ -62,12 +62,12 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - **Property 3: Refresh token issues a new JWT**
     - **Validates: Requirements 1.6**
     - For any valid refresh token from login, assert refresh endpoint returns new valid JWT without re-authentication
-  - [ ] 2.7 Implement OAuth2 and SAML 2.0 integration
+  - [~] 2.7 Implement OAuth2 and SAML 2.0 integration
     - Configure Spring Security OAuth2 client for `GET /api/v1/auth/oauth2/callback`
     - Configure Spring Security SAML for `POST /api/v1/auth/saml/acs`
     - Map external identity to internal user/tenant on first login
     - _Requirements: 1.8_
-  - [ ] 2.8 Implement RBAC enforcement as a Spring Security filter
+  - [~] 2.8 Implement RBAC enforcement as a Spring Security filter
     - Define roles: `VIEWER`, `MEMBER`, `ADMIN`, `HR_ADMIN`, `MANAGER`, `FINANCE`, `SALES_REP`
     - Annotate all protected endpoints with `@PreAuthorize` or a custom `@RequiresRole` annotation
     - Reject VIEWER write attempts and cross-tenant access with HTTP 403
