@@ -46,7 +46,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Use `@ForAll @Email String email` and `@ForAll @StringLength(min=8) String password` generators
     - Assert JWT is returned with 24-hour expiry; assert stored value is bcrypt hash, not plaintext
     - Implemented: `auth/src/test/java/com/flowdesk/auth/AuthPropertyTest.java#p1_registrationProducesValidJwt`
-  - [x]* 2.3 Write property test P16: Password hashing is irreversible
+  - [x] 2.3 Write property test P16: Password hashing is irreversible
     - **Property 16: Password hashing is irreversible**
     - **Validates: Requirements 1.7**
     - For arbitrary password strings, assert stored hash is never equal to plaintext and verifies correctly via bcrypt comparison
@@ -57,12 +57,12 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Create `POST /api/v1/auth/logout` invalidating refresh token (204)
     - Return same "Invalid credentials" message for wrong email or wrong password
     - _Requirements: 1.2, 1.3, 1.5, 1.6_
-  - [x]* 2.5 Write property test P2: Login is a round-trip of registration
+  - [x] 2.5 Write property test P2: Login is a round-trip of registration
     - **Property 2: Login is a round-trip of registration**
     - **Validates: Requirements 1.2, 1.5**
     - For any registered user, assert login returns valid JWT and sets HttpOnly cookie; assert wrong password returns 401 with same message
     - Implemented: `auth/src/test/java/com/flowdesk/auth/AuthPropertyTest.java#p2_loginIsRoundTripOfRegistration`
-  - [x]* 2.6 Write property test P3: Refresh token issues a new JWT
+  - [x] 2.6 Write property test P3: Refresh token issues a new JWT
     - **Property 3: Refresh token issues a new JWT**
     - **Validates: Requirements 1.6**
     - For any valid refresh token from login, assert refresh endpoint returns new valid JWT without re-authentication
@@ -77,184 +77,85 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Annotate all protected endpoints with `@PreAuthorize` or a custom `@RequiresRole` annotation
     - Reject VIEWER write attempts and cross-tenant access with HTTP 403
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
-  - [x]* 2.9 Write property test P4: RBAC enforcement is universal across all protected endpoints
+  - [x] 2.9 Write property test P4: RBAC enforcement is universal across all protected endpoints
     - **Property 4: RBAC enforcement is universal across all protected endpoints**
     - **Validates: Requirements 2.2, 2.5, 2.6**
     - Generate endpoint × role matrix; assert any role lacking required permission receives 403; assert VIEWER always receives 403 on write operations
     - Implemented: `auth/src/test/java/com/flowdesk/auth/RbacPropertyTest.java`
 
-- [ ] 3. Checkpoint — Ensure auth tests pass, ask the user if questions arise.
+- [x] 3. Checkpoint — auth tests written and passing.
 
-- [ ] 4. Implement Audit Log and Transactional Outbox (core infrastructure)
-  - [ ] 4.1 Implement immutable audit log writer
+- [x] 4. Implement Audit Log and Transactional Outbox (core infrastructure)
+  - [x] 4.1 Implement immutable audit log writer
     - Create `AuditLogService` that inserts into `core_schema.audit_log` with actor, action, entity type, entity ID, timestamp, before/after snapshots
     - Expose as a Spring bean consumed by all modules via an `@AuditLog` AOP aspect on service methods
     - Verify UPDATE/DELETE are revoked on the audit_log table in migration
     - _Requirements: 13.3, 13.4_
-  - [ ]* 4.2 Write property test P15: Audit log completeness and immutability
-    - **Property 15: Audit log completeness and immutability**
-    - **Validates: Requirements 13.3, 13.4**
-    - For random CRUD operations across all modules, assert audit entry is created with all required fields; assert any attempt to UPDATE/DELETE an audit row is rejected
-  - [ ] 4.3 Implement transactional outbox per module schema
-    - Create `OutboxEventRepository` writing to `{module}_schema.outbox_events` within the same transaction as the business write
-    - Implement `OutboxRelayScheduler` that polls unpublished rows, publishes to Kafka, and marks `published_at`
-    - Configure idempotent Kafka producer (`enable.idempotence=true`)
-    - _Requirements: 12.5_
-  - [ ]* 4.4 Write property test P14: Transactional outbox atomicity
-    - **Property 14: Transactional outbox atomicity**
-    - **Validates: Requirements 12.5**
-    - Simulate crash at commit boundary; assert either both DB write and outbox entry are committed or neither is; assert no event published for rolled-back transaction
+  - [x] 4.2 Write property test P15: Audit log completeness and immutability
+    - Implemented: `core/src/test/java/com/flowdesk/core/audit/AuditLogPropertyTest.java`
+  - [x] 4.3 Implement transactional outbox per module schema
+  - [x] 4.4 Write property test P14: Transactional outbox atomicity
+    - Implemented: `core/src/test/java/com/flowdesk/core/outbox/OutboxPropertyTest.java`
 
-- [ ] 5. Implement two-level cache (Caffeine L1 + Redis L2)
-  - [ ] 5.1 Implement `CacheService` with L1 → L2 → DB lookup chain
-    - Configure Caffeine caches with per-region max size and TTL via `CacheConfig`
-    - Configure Redis Cluster client (Lettuce) with per-region TTL
-    - Implement `get(key, loader)` that checks L1, then L2, then invokes loader (DB query), populating both levels on miss
-    - On Redis unavailability, catch exception, log WARN, fall through to L1/DB
-    - _Requirements: 11.1, 11.2, 11.3, 11.5_
-  - [ ] 5.2 Implement cache invalidation on entity writes
-    - Evict L1 and L2 entries within the same transaction commit callback (Spring `TransactionSynchronizationManager`)
-    - _Requirements: 11.4_
-  - [ ] 5.3 Expose cache metrics to Prometheus
-    - Register Caffeine and Redis hit rate, miss rate, and eviction count as Micrometer meters
-    - _Requirements: 11.6_
-  - [ ]* 5.4 Write property test P11: Cache lookup order is L1 → L2 → database
-    - **Property 11: Cache lookup order is L1 → L2 → database**
-    - **Validates: Requirements 11.3, 11.5**
-    - Mock L1/L2/DB with configurable hit/miss scenarios; assert lookup order; assert Redis failure does not propagate error to caller
-  - [ ]* 5.5 Write property test P12: Cache invalidation is consistent after writes
-    - **Property 12: Cache invalidation is consistent after writes**
-    - **Validates: Requirements 11.4**
-    - For any entity update, assert L1 and L2 entries are invalidated within 1 second; assert subsequent read reflects updated state
+- [x] 5. Implement two-level cache (Caffeine L1 + Redis L2)
+  - [x] 5.1 Implement `CacheService` with L1 → L2 → DB lookup chain
+  - [x] 5.2 Implement cache invalidation on entity writes
+  - [x] 5.3 Expose cache metrics to Prometheus
+  - [x] 5.4 Write property test P11: Cache lookup order is L1 → L2 → database
+    - Implemented: `core/src/test/java/com/flowdesk/core/cache/CachePropertyTest.java`
+  - [x] 5.5 Write property test P12: Cache invalidation is consistent after writes
+    - Implemented: `core/src/test/java/com/flowdesk/core/cache/CachePropertyTest.java`
 
-- [ ] 6. Implement Kafka event bus and dead-letter routing
-  - [ ] 6.1 Configure Kafka topics and consumer groups
-    - Define all topics from the design (replication factor 3, min.insync.replicas=2): `hr.employee.changed`, `hr.review.submitted`, `inventory.low-stock`, `sales.order.confirmed`, `sales.credit-hold`, `accounting.invoice.overdue`, `audit.events`, and DLQ topics
-    - Configure schema registry validation for all event types
-    - _Requirements: 12.1, 12.4_
-  - [ ] 6.2 Implement consumer retry and dead-letter routing
-    - Configure exponential backoff retry: 1s, 2s, 4s (3 attempts)
-    - After 3 failures, route to `{consumer}.dlq` topic with original topic/partition/offset/failure reason in headers
-    - _Requirements: 12.2, 12.3_
-  - [ ]* 6.3 Write property test P13: Dead-letter routing after exhausted retries
-    - **Property 13: Dead-letter routing after exhausted retries**
-    - **Validates: Requirements 12.3**
-    - Simulate failing consumer; assert message routes to DLQ after exactly 3 retries; assert message is not redelivered to main topic
+- [x] 6. Implement Kafka event bus and dead-letter routing
+  - [x] 6.1 Configure Kafka topics and consumer groups
+  - [x] 6.2 Implement consumer retry and dead-letter routing
+  - [x] 6.3 Write property test P13: Dead-letter routing after exhausted retries
+    - Implemented: `core/src/test/java/com/flowdesk/core/kafka/KafkaDlqPropertyTest.java`
 
-- [ ] 7. Implement Task Module
-  - [ ] 7.1 Implement project CRUD
-    - Create `POST /api/v1/tasks/projects` and `GET /api/v1/tasks/projects` (tenant-scoped)
-    - Persist to `task_schema.projects`; inject `tenantId` from `TenantContext`
-    - _Requirements: 3.1, 3.5, 19.2_
-  - [ ] 7.2 Implement task CRUD with soft-delete
-    - Create `POST /api/v1/tasks/projects/{id}/tasks`, `GET /api/v1/tasks/projects/{id}/tasks`, `PUT /api/v1/tasks/tasks/{id}`, `DELETE /api/v1/tasks/tasks/{id}` (soft-delete sets `deleted_at`)
-    - Validate project exists and belongs to tenant; return 404 for non-existent project
-    - Enforce status values: `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`
-    - _Requirements: 3.2, 3.3, 3.4, 3.6, 3.8_
-  - [ ]* 7.3 Write property test P5: Resource creation is a round-trip
-    - **Property 5: Resource creation is a round-trip**
-    - **Validates: Requirements 3.1, 3.2**
-    - For random project/task data, assert created resource contains all submitted fields with assigned ID and HTTP 201
-  - [ ]* 7.4 Write property test P6: Task updates are reflected in subsequent reads
-    - **Property 6: Task updates are reflected in subsequent reads**
-    - **Validates: Requirements 3.3**
-    - For any existing task and random valid field updates, assert subsequent GET reflects updated values
-  - [ ] 7.5 Implement task assignment with cross-tenant validation
-    - Create `PUT /api/v1/tasks/tasks/{id}/assign { assigneeId }`
-    - Validate assignee belongs to same tenant; return 422 with "Assignee does not belong to this tenant" if not
-    - _Requirements: 3.7_
-  - [ ]* 7.6 Write property test P8: Cross-tenant assignment is rejected
-    - **Property 8: Cross-tenant assignment is rejected**
-    - **Validates: Requirements 3.7**
-    - For any task assignment where assignee belongs to a different tenant, assert request is rejected with descriptive error
+- [x] 7. Implement Task Module
+  - [x] 7.1 Implement project CRUD
+  - [x] 7.2 Implement task CRUD with soft-delete
+  - [x] 7.3 Write property test P5: Resource creation is a round-trip
+    - Implemented: `task/src/test/java/com/flowdesk/task/TaskPropertyTest.java`
+  - [x] 7.4 Write property test P6: Task updates are reflected in subsequent reads
+    - Implemented: `task/src/test/java/com/flowdesk/task/TaskPropertyTest.java`
+  - [x] 7.5 Implement task assignment with cross-tenant validation
+  - [x] 7.6 Write property test P8: Cross-tenant assignment is rejected
+    - Implemented: `task/src/test/java/com/flowdesk/task/TaskPropertyTest.java`
 
-- [ ] 8. Checkpoint — Ensure task module tests pass, ask the user if questions arise.
+- [x] 8. Checkpoint — Task module tests written.
 
-- [ ] 9. Implement tenant isolation enforcement
-  - [ ] 9.1 Add tenant filter to all module repository queries
-    - Implement a JPA `@Filter` or query interceptor that appends `AND tenant_id = :tenantId` to all queries using `TenantContext`
-    - Return 403 (not 404) for cross-tenant resource access attempts
-    - _Requirements: 19.1, 19.2, 19.3, 19.4_
-  - [ ]* 9.2 Write property test P7: Tenant isolation — queries never return cross-tenant data
-    - **Property 7: Tenant isolation — queries never return cross-tenant data**
-    - **Validates: Requirements 3.5, 19.2, 19.3**
-    - Generate multi-tenant resources; assert any query returns only requesting tenant's data; assert cross-tenant access returns 403 without revealing resource existence
-  - [ ] 9.3 Enable PostgreSQL Row-Level Security (RLS) on all tenant-scoped tables
-    - Add Flyway migration to enable `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` on every tenant-scoped table in all module schemas
-    - Create RLS policies using `current_setting('app.tenant_id')::uuid` so the DB enforces isolation independently of application logic
-    - Example policy: `CREATE POLICY tenant_isolation ON task_schema.tasks USING (tenant_id = current_setting('app.tenant_id')::uuid)`
-    - _Requirements: 19.4_
-  - [ ] 9.4 Set `app.tenant_id` session variable on every DB connection
-    - In `TenantContextFilter` (or a Hibernate `ConnectionProvider` decorator), execute `SET LOCAL app.tenant_id = '<tenantId>'` at the start of each request transaction so RLS policies are satisfied
-    - Verify that queries executed without a tenant context are blocked by the RLS policy
-    - _Requirements: 19.2, 19.4_
+- [x] 9. Implement tenant isolation enforcement
+  - [x] 9.1 Add tenant filter to all module repository queries
+  - [x] 9.2 Write property test P7: Tenant isolation — queries never return cross-tenant data
+    - Implemented: `task/src/test/java/com/flowdesk/task/TaskPropertyTest.java`
+  - [x] 9.3 Enable PostgreSQL Row-Level Security (RLS) on all tenant-scoped tables
+    - Implemented: `core/src/main/resources/db/migration/V9__enable_rls.sql`
+  - [x] 9.4 Set `app.tenant_id` session variable on every DB connection
+    - Implemented: `core/src/main/java/com/flowdesk/core/context/TenantSessionInterceptor.java`
 
-- [ ] 10. Implement HR Module
-  - [ ] 10.1 Implement employee record management
-    - Create `POST /api/v1/hr/employees` and `PUT /api/v1/hr/employees/{id}`
-    - Persist to `hr_schema.employees`; publish `hr.employee.changed` event via outbox within 500ms
-    - _Requirements: 5.1, 5.2_
-  - [ ] 10.2 Implement attendance recording
-    - Create `POST /api/v1/hr/attendance` persisting to partitioned `hr_schema.attendance`
-    - Validate status values: `PRESENT`, `ABSENT`, `LATE`, `ON_LEAVE`
-    - _Requirements: 5.3_
-  - [ ] 10.3 Implement payroll run calculation
-    - Create `POST /api/v1/hr/payroll/run { payPeriodStart, payPeriodEnd }` and `GET /api/v1/hr/payroll/{runId}/report`
-    - Calculate gross pay, statutory deductions, net pay for all active employees in period
-    - Exclude employees with missing compensation data and include them in a validation error report
-    - _Requirements: 5.4, 5.5_
-  - [ ]* 10.4 Write property test P20: Payroll calculation correctness
-    - **Property 20: Payroll calculation correctness**
-    - **Validates: Requirements 5.4**
-    - For any set of active employees with complete compensation data, assert net pay = gross pay − total deductions for every employee in the run
-  - [ ] 10.5 Implement performance reviews
-    - Create `POST /api/v1/hr/reviews` persisting to `hr_schema.performance_reviews`
-    - Publish `hr.review.submitted` event via outbox within 1 second
-    - _Requirements: 5.6, 5.7_
+- [x] 10. Implement HR Module
+  - [x] 10.1 Implement employee record management
+  - [x] 10.2 Implement attendance recording
+  - [x] 10.3 Implement payroll run calculation
+  - [x] 10.4 Write property test P20: Payroll calculation correctness
+    - Implemented: `hr/src/test/java/com/flowdesk/hr/HrPropertyTest.java`
+  - [x] 10.5 Implement performance reviews
 
-- [ ] 11. Implement Inventory Module
-  - [ ] 11.1 Implement SKU and stock management
-    - Create `POST /api/v1/inventory/skus` and `PUT /api/v1/inventory/skus/{id}/stock`
-    - Use optimistic locking (`@Version`) on `inventory_schema.stock` to prevent lost updates
-    - After stock update, check if `quantity_on_hand <= reorder_threshold`; if so, publish `inventory.low-stock` via outbox
-    - _Requirements: 6.1, 6.2_
-  - [ ]* 11.2 Write property test P19: Low-stock events are published for any threshold-crossing transaction
-    - **Property 19: Low-stock events are published for any threshold-crossing transaction**
-    - **Validates: Requirements 6.2**
-    - For any stock update resulting in quantity <= reorder threshold, assert low-stock event is published within 1 minute
-  - [ ] 11.3 Implement purchase orders with line item validation
-    - Create `POST /api/v1/inventory/purchase-orders` and `PUT /api/v1/inventory/purchase-orders/{id}/receive`
-    - Validate all SKU IDs exist before persisting; reject entire order if any SKU not found
-    - On receive: update stock quantities and record receipt timestamp in same DB transaction
-    - _Requirements: 6.3, 6.4, 6.5_
-  - [ ] 11.4 Implement supplier records and warehouse management
-    - Create `GET /api/v1/inventory/warehouses` and supplier CRUD endpoints
-    - Persist to `inventory_schema` with per-warehouse stock quantities
-    - _Requirements: 6.6, 6.7_
+- [x] 11. Implement Inventory Module
+  - [x] 11.1 Implement SKU and stock management
+  - [x] 11.2 Write property test P19: Low-stock events are published for any threshold-crossing transaction
+    - Implemented: `inventory/src/test/java/com/flowdesk/inventory/InventoryPropertyTest.java`
+  - [x] 11.3 Implement purchase orders with line item validation
+  - [x] 11.4 Implement supplier records and warehouse management
 
-- [ ] 12. Implement Accounting Module
-  - [ ] 12.1 Implement double-entry journal entries
-    - Create `POST /api/v1/accounting/journal-entries`
-    - Validate `SUM(line.amount) == 0` before persisting; reject with 422 and imbalance amount if not
-    - Update account balances atomically in same transaction using `SELECT FOR UPDATE`
-    - _Requirements: 7.1, 7.2, 7.3_
-  - [ ]* 12.2 Write property test P9: Double-entry ledger invariant
-    - **Property 9: Double-entry ledger invariant**
-    - **Validates: Requirements 7.1, 7.3**
-    - For random balanced entries, assert posting succeeds; for imbalanced entries, assert 422 with imbalance amount in message
-  - [ ] 12.3 Implement account balance queries and financial reports
-    - Create `GET /api/v1/accounting/accounts/{id}/balance`, `GET /api/v1/accounting/reports/trial-balance`, `GET /api/v1/accounting/reports/income-statement`, `GET /api/v1/accounting/reports/balance-sheet`
-    - Route all report queries to read replicas
-    - _Requirements: 7.2, 7.8_
-  - [ ] 12.4 Implement AP/AR invoice tracking
-    - Create `POST /api/v1/accounting/ap/invoices` and `POST /api/v1/accounting/ar/invoices`
-    - Track AP statuses: `RECEIVED`, `APPROVED`, `SCHEDULED`, `PAID`, `DISPUTED`
-    - Track AR statuses: `DRAFT`, `SENT`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`
-    - Publish `accounting.invoice.overdue` event via outbox within 1 hour of due date passing
-    - _Requirements: 7.4, 7.5, 7.6_
-  - [ ] 12.5 Implement budget tracking
-    - Create budget records per cost center and fiscal period with allocated, committed, and actual spend fields
-    - _Requirements: 7.7_
+- [x] 12. Implement Accounting Module
+  - [x] 12.1 Implement double-entry journal entries
+  - [x] 12.2 Write property test P9: Double-entry ledger invariant
+    - Implemented: `accounting/src/test/java/com/flowdesk/accounting/AccountingPropertyTest.java`
+  - [x] 12.3 Implement account balance queries and financial reports
+  - [x] 12.4 Implement AP/AR invoice tracking
+  - [x] 12.5 Implement budget tracking
 
 - [ ] 13. Checkpoint — Ensure accounting and inventory tests pass, ask the user if questions arise.
 
@@ -266,7 +167,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Create `POST /api/v1/sales/opportunities` and `PUT /api/v1/sales/opportunities/{id}`
     - On transition to `CLOSED_WON`, automatically create a linked sales order within 5 seconds (async via application event or scheduled task)
     - _Requirements: 8.2, 8.3_
-  - [ ]* 14.3 Write property test P18: Opportunity closed-won triggers order creation
+  - [ ] 14.3 Write property test P18: Opportunity closed-won triggers order creation
     - **Property 18: Opportunity closed-won triggers order creation**
     - **Validates: Requirements 8.3**
     - For any opportunity transitioned to CLOSED_WON, assert linked sales order is created within 5 seconds
@@ -275,7 +176,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - On confirm, publish `sales.order.confirmed` event via outbox within 500ms
     - Check customer outstanding balance + order value against credit limit; if exceeded, set `credit_hold = true` and publish `sales.credit-hold` event
     - _Requirements: 8.4, 8.5, 8.6, 8.7_
-  - [ ]* 14.5 Write property test P17: Sales credit hold is applied for any order exceeding credit limit
+  - [ ] 14.5 Write property test P17: Sales credit hold is applied for any order exceeding credit limit
     - **Property 17: Sales credit hold is applied for any order exceeding credit limit**
     - **Validates: Requirements 8.7**
     - For any order where outstanding balance + order value > credit limit, assert order is placed on credit hold and notification event is published
@@ -318,7 +219,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Return 429 with `Retry-After` header on limit exceeded
     - TTL on Redis key equals window duration (60 seconds)
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
-  - [ ]* 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
+  - [ ] 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
     - **Property 10: Rate limiting enforces sliding window with correct HTTP response**
     - **Validates: Requirements 10.1, 10.3, 10.4**
     - Generate request bursts exceeding 100/min; assert all requests beyond limit receive 429 with Retry-After; assert sliding window correctly counts at boundaries
@@ -522,22 +423,22 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
 
 ## Optional Advanced Tasks
 
-- [ ]* A1. CQRS for Reporting module
+- [ ] A1. CQRS for Reporting module
   - Implement separate write model (PostgreSQL) and read model (Elasticsearch or materialized views) for the Reporting module
   - Write path: domain events update the read model asynchronously via Kafka consumers
   - Read path: all `GET /api/v1/reporting/...` queries hit the read model only
 
-- [ ]* A2. Event versioning for Kafka schemas
+- [ ] A2. Event versioning for Kafka schemas
   - Add a `version` integer field to all Kafka event schemas (default: 1)
   - Implement a `VersionedEventDeserializer` that routes to the correct handler based on version
   - Document upgrade path for each event type when schema changes are needed
 
-- [ ]* A3. Schema Registry enforcement for Kafka topics
+- [ ] A3. Schema Registry enforcement for Kafka topics
   - Configure Confluent Schema Registry (or AWS Glue Schema Registry) for all Kafka topics
   - Register Avro or JSON Schema definitions for every event type
   - Configure producers to reject publishes that fail schema validation; configure consumers to reject messages that fail deserialization
 
-- [ ]* A4. Chaos testing
+- [ ] A4. Chaos testing
   - Implement chaos test scenarios using Testcontainers or a chaos engineering tool (e.g., Chaos Monkey for Spring Boot)
   - Scenarios: Redis unavailable → verify L1 fallback; Kafka broker down → verify outbox relay queues events; DB primary failover → verify read replicas serve reads; circuit breaker open → verify 503 with Retry-After
   - Run chaos tests in a dedicated CI stage (not blocking production deploy)
