@@ -1,4 +1,25 @@
 spring:
+  datasource:
+    primary:
+      jdbc-url: ${DB_PRIMARY_URL:jdbc:postgresql://localhost:5432/flowdesk}
+      username: ${DB_USERNAME:flowdesk}
+      password: ${DB_PASSWORD:flowdesk}
+      driver-class-name: org.postgresql.Driver
+    replica0:
+      jdbc-url: ${DB_REPLICA0_URL:jdbc:postgresql://localhost:5433/flowdesk}
+      username: ${DB_USERNAME:flowdesk}
+      password: ${DB_PASSWORD:flowdesk}
+      driver-class-name: org.postgresql.Driver
+    replica1:
+      jdbc-url: ${DB_REPLICA1_URL:jdbc:postgresql://localhost:5434/flowdesk}
+      username: ${DB_USERNAME:flowdesk}
+      password: ${DB_PASSWORD:flowdesk}
+      driver-class-name: org.postgresql.Driver
+    replica2:
+      jdbc-url: ${DB_REPLICA2_URL:jdbc:postgresql://localhost:5435/flowdesk}
+      username: ${DB_USERNAME:flowdesk}
+      password: ${DB_PASSWORD:flowdesk}
+      driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
     locations: classpath:db/migration
