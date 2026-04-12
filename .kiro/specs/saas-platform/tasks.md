@@ -31,37 +31,42 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
   - [x] 1.5 Write integration test for read/write routing
     - Verify read queries use replica connections and write queries use primary
     - _Requirements: 20.3_
+    - Implemented: `core/src/test/java/com/flowdesk/core/config/ReadReplicaRoutingIntegrationTest.java`
 
-- [-] 2. Implement Auth Service (JWT, OAuth2/SAML, RBAC)
+- [x] 2. Implement Auth Service (JWT, OAuth2/SAML, RBAC)
   - [x] 2.1 Implement user registration and password hashing
     - Create `POST /api/v1/auth/register` endpoint accepting `{ email, password }`
     - Hash passwords with bcrypt cost factor >= 12 using Spring Security `BCryptPasswordEncoder`
     - Persist user to `core_schema.users`; return 409 on duplicate email
     - Return signed JWT (24-hour expiry) on success
     - _Requirements: 1.1, 1.4, 1.7_
-  - [ ] 2.2 Write property test P1: Registration produces a valid JWT for any valid credential
+  - [x] 2.2 Write property test P1: Registration produces a valid JWT for any valid credential
     - **Property 1: Registration produces a valid JWT for any valid credential**
     - **Validates: Requirements 1.1, 1.7**
     - Use `@ForAll @Email String email` and `@ForAll @StringLength(min=8) String password` generators
     - Assert JWT is returned with 24-hour expiry; assert stored value is bcrypt hash, not plaintext
-  - [ ]* 2.3 Write property test P16: Password hashing is irreversible
+    - Implemented: `auth/src/test/java/com/flowdesk/auth/AuthPropertyTest.java#p1_registrationProducesValidJwt`
+  - [x]* 2.3 Write property test P16: Password hashing is irreversible
     - **Property 16: Password hashing is irreversible**
     - **Validates: Requirements 1.7**
     - For arbitrary password strings, assert stored hash is never equal to plaintext and verifies correctly via bcrypt comparison
+    - Implemented: `auth/src/test/java/com/flowdesk/auth/AuthPropertyTest.java#p16_passwordHashingIsIrreversible`
   - [x] 2.4 Implement login, refresh token, and logout
     - Create `POST /api/v1/auth/login` returning JWT + HttpOnly refresh token cookie
     - Create `POST /api/v1/auth/refresh` validating refresh token and issuing new JWT
     - Create `POST /api/v1/auth/logout` invalidating refresh token (204)
     - Return same "Invalid credentials" message for wrong email or wrong password
     - _Requirements: 1.2, 1.3, 1.5, 1.6_
-  - [ ]* 2.5 Write property test P2: Login is a round-trip of registration
+  - [x]* 2.5 Write property test P2: Login is a round-trip of registration
     - **Property 2: Login is a round-trip of registration**
     - **Validates: Requirements 1.2, 1.5**
     - For any registered user, assert login returns valid JWT and sets HttpOnly cookie; assert wrong password returns 401 with same message
-  - [ ]* 2.6 Write property test P3: Refresh token issues a new JWT
+    - Implemented: `auth/src/test/java/com/flowdesk/auth/AuthPropertyTest.java#p2_loginIsRoundTripOfRegistration`
+  - [x]* 2.6 Write property test P3: Refresh token issues a new JWT
     - **Property 3: Refresh token issues a new JWT**
     - **Validates: Requirements 1.6**
     - For any valid refresh token from login, assert refresh endpoint returns new valid JWT without re-authentication
+    - Implemented: `auth/src/test/java/com/flowdesk/auth/AuthPropertyTest.java#p3_refreshTokenIssuesNewJwt`
   - [x] 2.7 Implement OAuth2 and SAML 2.0 integration
     - Configure Spring Security OAuth2 client for `GET /api/v1/auth/oauth2/callback`
     - Configure Spring Security SAML for `POST /api/v1/auth/saml/acs`
@@ -72,10 +77,11 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Annotate all protected endpoints with `@PreAuthorize` or a custom `@RequiresRole` annotation
     - Reject VIEWER write attempts and cross-tenant access with HTTP 403
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
-  - [ ]* 2.9 Write property test P4: RBAC enforcement is universal across all protected endpoints
+  - [x]* 2.9 Write property test P4: RBAC enforcement is universal across all protected endpoints
     - **Property 4: RBAC enforcement is universal across all protected endpoints**
     - **Validates: Requirements 2.2, 2.5, 2.6**
     - Generate endpoint × role matrix; assert any role lacking required permission receives 403; assert VIEWER always receives 403 on write operations
+    - Implemented: `auth/src/test/java/com/flowdesk/auth/RbacPropertyTest.java`
 
 - [ ] 3. Checkpoint — Ensure auth tests pass, ask the user if questions arise.
 
