@@ -18,12 +18,12 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Create `ValidationException`, `AuthenticationException`, `AccessDeniedException`, `ResourceNotFoundException`, `ConflictException`, `RateLimitExceededException`, `BusinessRuleException`, `ServiceUnavailableException`
     - Create structured JSON logging configuration (Logback + logstash-logback-encoder) with fields: `timestamp`, `level`, `service`, `traceId`, `message`
     - _Requirements: 4.5, 13.3, 17.1_
-  - [-] 1.3 Set up PostgreSQL schemas and Flyway migrations for all modules
+  - [x] 1.3 Set up PostgreSQL schemas and Flyway migrations for all modules
     - Create Flyway migration scripts for: `core_schema`, `task_schema`, `hr_schema`, `inventory_schema`, `accounting_schema`, `sales_schema`, `reporting_schema`
     - Include all DDL from the design document (tables, indexes, partitions, constraints)
     - Revoke UPDATE/DELETE on `core_schema.audit_log` for all application roles
     - _Requirements: 20.1, 20.4, 13.4_
-  - [~] 1.4 Configure HikariCP connection pool with primary + 3 read-replica routing
+  - [-] 1.4 Configure HikariCP connection pool with primary + 3 read-replica routing
     - Define `DataSourceConfig` with a primary `DataSource` and a `ReadReplicaRoutingDataSource` that round-robins across 3 replicas
     - Annotate read-only service methods with `@Transactional(readOnly = true)` to route to replicas
     - Configure pool sizes for 10,000 concurrent users target
