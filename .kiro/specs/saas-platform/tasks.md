@@ -157,97 +157,97 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
   - [x] 12.4 Implement AP/AR invoice tracking
   - [x] 12.5 Implement budget tracking
 
-- [ ] 13. Checkpoint — Ensure accounting and inventory tests pass, ask the user if questions arise.
+- [-] 13. Checkpoint — Ensure accounting and inventory tests pass, ask the user if questions arise.
 
 - [ ] 14. Implement Sales Module
-  - [ ] 14.1 Implement customer record management
+  - [~] 14.1 Implement customer record management
     - Create `POST /api/v1/sales/customers` persisting to `sales_schema.customers` with credit limit and payment terms
     - _Requirements: 8.1_
-  - [ ] 14.2 Implement opportunity pipeline with closed-won automation
+  - [~] 14.2 Implement opportunity pipeline with closed-won automation
     - Create `POST /api/v1/sales/opportunities` and `PUT /api/v1/sales/opportunities/{id}`
     - On transition to `CLOSED_WON`, automatically create a linked sales order within 5 seconds (async via application event or scheduled task)
     - _Requirements: 8.2, 8.3_
-  - [ ] 14.3 Write property test P18: Opportunity closed-won triggers order creation
+  - [~] 14.3 Write property test P18: Opportunity closed-won triggers order creation
     - **Property 18: Opportunity closed-won triggers order creation**
     - **Validates: Requirements 8.3**
     - For any opportunity transitioned to CLOSED_WON, assert linked sales order is created within 5 seconds
-  - [ ] 14.4 Implement sales orders with credit hold logic
+  - [~] 14.4 Implement sales orders with credit hold logic
     - Create `POST /api/v1/sales/orders`, `PUT /api/v1/sales/orders/{id}/confirm`, `POST /api/v1/sales/orders/{id}/invoice`
     - On confirm, publish `sales.order.confirmed` event via outbox within 500ms
     - Check customer outstanding balance + order value against credit limit; if exceeded, set `credit_hold = true` and publish `sales.credit-hold` event
     - _Requirements: 8.4, 8.5, 8.6, 8.7_
-  - [ ] 14.5 Write property test P17: Sales credit hold is applied for any order exceeding credit limit
+  - [~] 14.5 Write property test P17: Sales credit hold is applied for any order exceeding credit limit
     - **Property 17: Sales credit hold is applied for any order exceeding credit limit**
     - **Validates: Requirements 8.7**
     - For any order where outstanding balance + order value > credit limit, assert order is placed on credit hold and notification event is published
-  - [ ] 14.6 Implement customer interaction recording
+  - [~] 14.6 Implement customer interaction recording
     - Create `POST /api/v1/sales/interactions` persisting calls, emails, meetings linked to customer or opportunity with timestamp and author
     - _Requirements: 8.8_
 
 - [ ] 15. Implement Reporting Module and Elasticsearch integration
-  - [ ] 15.1 Implement pre-built dashboards per module
+  - [~] 15.1 Implement pre-built dashboards per module
     - Create `GET /api/v1/reporting/dashboards/{module}` returning key metrics refreshed at <= 5 minutes
     - Cache dashboard results in Redis with 5-minute TTL
     - _Requirements: 9.1, 18.1, 18.2_
-  - [ ] 15.2 Implement custom report definition and execution
+  - [~] 15.2 Implement custom report definition and execution
     - Create `POST /api/v1/reporting/reports` (define report) and `POST /api/v1/reporting/reports/{id}/execute`
     - Execute against read replicas; return results within 10 seconds for up to 100,000 rows
     - Enforce RBAC: filter results to only resources the requesting user is authorized to view
     - _Requirements: 9.2, 9.3, 9.7_
-  - [ ] 15.3 Implement async data export (CSV/XLSX)
+  - [~] 15.3 Implement async data export (CSV/XLSX)
     - Create `GET /api/v1/reporting/reports/{id}/export`
     - For result sets > 10,000 rows, process asynchronously and notify user via event when file is ready; store export in S3
     - _Requirements: 9.4, 9.5_
-  - [ ] 15.4 Implement Elasticsearch full-text search
+  - [~] 15.4 Implement Elasticsearch full-text search
     - Configure Elasticsearch client and index mappings for all module entities
     - Create `GET /api/v1/reporting/search?q=...` returning results within 500ms for indexed datasets
     - Sync data to Elasticsearch via Kafka consumer on entity change events
     - _Requirements: 9.6_
-  - [ ] 15.5 Enforce max sync query size and async-only threshold
+  - [~] 15.5 Enforce max sync query size and async-only threshold
     - Reject synchronous report execution requests for datasets exceeding 10,000 rows; return HTTP 422 with message "Result set too large — use async export"
     - Route all requests above the threshold to the async export flow (task 15.3)
     - _Requirements: 9.3, 9.5_
-  - [ ] 15.6 Implement cursor-based pagination for large result sets
+  - [~] 15.6 Implement cursor-based pagination for large result sets
     - Replace offset-based pagination in `POST /api/v1/reporting/reports/{id}/execute` with keyset/cursor pagination
     - Accept `cursor` query parameter; return `nextCursor` in response envelope; default page size 1,000 rows
     - Prevents full-table scans and keeps P95 latency within SLO under large datasets
     - _Requirements: 9.3, 22.1_
 
 - [ ] 16. Implement API Gateway layer
-  - [ ] 16.1 Implement sliding window rate limiter using Redis
+  - [~] 16.1 Implement sliding window rate limiter using Redis
     - Implement `RateLimitFilter` using Redis with key `rate:{userId}` (100 req/min) and `rate:ip:{ip}` (20 req/min for unauthenticated)
     - Return 429 with `Retry-After` header on limit exceeded
     - TTL on Redis key equals window duration (60 seconds)
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
-  - [ ] 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
+  - [~] 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
     - **Property 10: Rate limiting enforces sliding window with correct HTTP response**
     - **Validates: Requirements 10.1, 10.3, 10.4**
     - Generate request bursts exceeding 100/min; assert all requests beyond limit receive 429 with Retry-After; assert sliding window correctly counts at boundaries
-  - [ ] 16.3 Configure versioned REST endpoints and OpenAPI spec
+  - [~] 16.3 Configure versioned REST endpoints and OpenAPI spec
     - Ensure all endpoints follow `/api/v1/` pattern
     - Configure SpringDoc OpenAPI 3.0 to auto-generate spec from annotations, kept in sync with implementation
     - _Requirements: 10.6, 10.7_
-  - [ ] 16.4 Implement central request routing and JWT validation at gateway level
+  - [~] 16.4 Implement central request routing and JWT validation at gateway level
     - Implement a `GatewayRoutingFilter` (Spring Cloud Gateway or custom `OncePerRequestFilter`) that routes requests to the correct module handler based on path prefix
     - Move JWT validation out of individual modules into a single gateway-level filter so auth is enforced uniformly before any module code executes
     - Return 401 for missing/invalid/expired JWT before the request reaches module logic
     - _Requirements: 2.5, 2.6, 10.6_
-  - [ ] 16.5 Inject Correlation ID into every request
+  - [~] 16.5 Inject Correlation ID into every request
     - In the gateway filter chain, read `X-Correlation-ID` header if present; otherwise generate a UUID
     - Store in `MDC` (Mapped Diagnostic Context) so it appears in every log line for that request
     - Forward the header downstream and include it in all API responses
     - _Requirements: 17.1, 17.3_
-  - [ ] 16.6 Add gateway-level request logging and metrics
+  - [~] 16.6 Add gateway-level request logging and metrics
     - Log every inbound request at INFO level: method, path, tenant ID, correlation ID, response status, and latency
     - Register Micrometer meters at the gateway filter: `http.server.requests` tagged by module, method, and status
     - _Requirements: 17.1, 17.4_
 
 - [ ] 17. Implement idempotency keys for mutating POST APIs
-  - [ ] 17.1 Accept and validate `Idempotency-Key` header on critical POST endpoints
+  - [~] 17.1 Accept and validate `Idempotency-Key` header on critical POST endpoints
     - Require the `Idempotency-Key` header (UUID) on: `POST /api/v1/sales/orders`, `POST /api/v1/accounting/ap/invoices`, `POST /api/v1/accounting/ar/invoices`, `PUT /api/v1/inventory/skus/{id}/stock`, and `POST /api/v1/hr/payroll/run`
     - Return 400 if the header is missing on these endpoints
     - _Requirements: 8.4, 6.1, 5.4_
-  - [ ] 17.2 Store request hash and response in Redis; return cached response on retry
+  - [~] 17.2 Store request hash and response in Redis; return cached response on retry
     - On first execution, store `idempotency:{key}` → `{ requestHash, responseStatus, responseBody }` in Redis with a 24-hour TTL
     - On subsequent requests with the same key, verify the request hash matches; if so, return the cached response immediately without re-executing business logic
     - If the hash differs (same key, different body), return 422 with message "Idempotency key reused with different request body"
@@ -255,171 +255,171 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - _Requirements: 8.4, 6.1, 5.4, 22.2_
 
 - [ ] 18. Implement distributed locking for critical concurrent flows
-  - [ ] 18.1 Integrate Redisson (or Redis SETNX) distributed lock client
+  - [~] 18.1 Integrate Redisson (or Redis SETNX) distributed lock client
     - Add Redisson dependency; configure `RedissonClient` bean pointing at the existing Redis Cluster
     - Implement a `DistributedLockService` with `tryLock(key, ttl)` / `unlock(key)` methods wrapping `RLock`
     - _Requirements: 22.2_
-  - [ ] 18.2 Apply distributed locks to payroll runs, order confirmation, and stock updates
+  - [~] 18.2 Apply distributed locks to payroll runs, order confirmation, and stock updates
     - Payroll run: acquire lock `lock:payroll:{tenantId}:{payPeriod}` before executing; reject with 409 if lock is held (concurrent run in progress)
     - Order confirmation: acquire lock `lock:order:{orderId}` before state transition to prevent double-confirm
     - Stock updates: acquire lock `lock:stock:{skuId}:{warehouseId}` before adjusting `quantity_on_hand` (complements optimistic locking)
     - Release all locks in a `finally` block; set TTL to 30 seconds as a safety net against crash-without-release
     - _Requirements: 5.4, 8.4, 6.1, 22.2_
 
-- [ ] 19. Checkpoint — Ensure all module tests pass, ask the user if questions arise.
+- [~] 19. Checkpoint — Ensure all module tests pass, ask the user if questions arise.
 
 - [ ] 20. Implement observability (Prometheus, Grafana, ELK, Jaeger)
-  - [ ] 20.1 Configure Micrometer + Prometheus metrics endpoint
+  - [~] 20.1 Configure Micrometer + Prometheus metrics endpoint
     - Expose `/metrics` in Prometheus format via Spring Boot Actuator
     - Register custom meters: request rate, error rate, latency percentiles (P50, P95, P99), JVM heap, cache hit rates
     - _Requirements: 17.4_
-  - [ ] 20.2 Configure Jaeger distributed tracing
+  - [~] 20.2 Configure Jaeger distributed tracing
     - Add OpenTelemetry Java agent or Micrometer Tracing with Jaeger exporter
     - Propagate `traceId` header across all inter-module calls
     - Capture full stack trace on unhandled exceptions and associate with active `traceId`
     - _Requirements: 17.2, 17.3_
-  - [ ] 20.3 Implement `/health` endpoint
+  - [~] 20.3 Implement `/health` endpoint
     - Create Spring Boot Actuator health endpoint checking: PostgreSQL, Redis, Kafka, Elasticsearch
     - Return HTTP 200 when all healthy, HTTP 503 when any degraded
     - _Requirements: 17.8_
-  - [ ] 20.4 Configure slow query logging
+  - [~] 20.4 Configure slow query logging
     - Set Hibernate/JDBC slow query threshold to 20ms; log query text, parameters, and execution plan
     - _Requirements: 20.7_
 
 - [ ] 21. Set up Docker Compose for local development
-  - [ ] 21.1 Write `docker-compose.yml` with all services
+  - [~] 21.1 Write `docker-compose.yml` with all services
     - Define services: `backend` (Spring Boot), `frontend` (React/Nginx), `postgres` (primary + 3 replicas), `redis` (cluster), `kafka` (3 brokers + Zookeeper/KRaft), `elasticsearch`, `prometheus`, `grafana`, `jaeger`
     - Add health checks for backend, Redis, and Kafka
     - Use named volumes for postgres and Redis data persistence
     - Configure auto-restart on 3 consecutive health check failures for backend
     - _Requirements: 15.1, 15.2, 15.4, 15.5, 15.6_
-  - [ ] 21.2 Write multi-stage Dockerfiles for backend and frontend
+  - [~] 21.2 Write multi-stage Dockerfiles for backend and frontend
     - Backend: build stage (JDK + Gradle/Maven) → runtime stage (JRE slim), target < 200MB
     - Frontend: build stage (Node) → runtime stage (Nginx alpine), target < 200MB
     - _Requirements: 15.3_
 
 - [ ] 22. Write Terraform IaC for AWS infrastructure
-  - [ ] 22.1 Define EKS cluster, RDS, ElastiCache, MSK, ECR, S3 in Terraform
+  - [~] 22.1 Define EKS cluster, RDS, ElastiCache, MSK, ECR, S3 in Terraform
     - Create Terraform modules for: EKS cluster, RDS PostgreSQL Multi-AZ + 3 read replicas, ElastiCache Redis cluster, Amazon MSK (Kafka), ECR registry, S3 buckets (exports, backups)
     - Configure ACM TLS 1.3 certificates and Secrets Manager for all secrets
     - No manually provisioned resources; all infra defined in code
     - _Requirements: 21.1, 21.4, 13.7_
-  - [ ] 22.2 Define Kubernetes manifests (Deployments, HPA, NetworkPolicies)
+  - [~] 22.2 Define Kubernetes manifests (Deployments, HPA, NetworkPolicies)
     - Create Deployment/StatefulSet per module with resource requests, limits, liveness probes, readiness probes
     - Configure HPA per module (CPU-based, scale within 3 minutes)
     - Define NetworkPolicies restricting inter-pod communication to explicitly allowed paths
     - _Requirements: 21.5, 21.6, 21.7, 22.5_
-  - [ ] 22.3 Configure multi-region failover for RTO ≤ 15 minutes
+  - [~] 22.3 Configure multi-region failover for RTO ≤ 15 minutes
     - Provision RDS read replica in a secondary AWS region; configure automated promotion runbook
     - Enable S3 Cross-Region Replication (CRR) for export and backup buckets
     - Configure Route 53 health-check-based failover routing: primary record points to primary region ALB; secondary record activates on health check failure
     - Document and test the failover procedure to verify RTO ≤ 15 minutes
     - _Requirements: 20.6_
-  - [ ] 22.4 Configure S3 cross-region replication and Route 53 failover
+  - [~] 22.4 Configure S3 cross-region replication and Route 53 failover
     - Define Terraform resources: `aws_s3_bucket_replication_configuration`, `aws_route53_health_check`, `aws_route53_record` (failover routing policy)
     - Ensure replication IAM role has `s3:ReplicateObject` permission on destination bucket
     - _Requirements: 20.6, 21.1_
 
 - [ ] 23. Set up GitHub Actions CI/CD pipeline
-  - [ ] 23.1 Implement PR validation workflow
+  - [~] 23.1 Implement PR validation workflow
     - On PR to main: run compilation, unit tests, integration tests, SAST (Semgrep/SpotBugs), DAST (OWASP ZAP against staging)
     - Block merge on: compile errors, test failures, critical/high security findings
     - Complete within 10 minutes; cache dependency layers between runs
     - _Requirements: 16.1, 16.2, 16.7, 13.6_
-  - [ ] 23.2 Implement main branch build and push workflow
+  - [~] 23.2 Implement main branch build and push workflow
     - On merge to main: build Docker images, tag with commit SHA, push to ECR
     - Run JMeter performance tests against staging; block promotion if P95 > 100ms or error rate > 0.1%
     - _Requirements: 16.3, 16.6_
-  - [ ] 23.3 Implement blue-green deployment workflow
+  - [~] 23.3 Implement blue-green deployment workflow
     - Deploy to inactive environment (blue/green), run health checks on all pods
     - Switch traffic only after health checks pass; auto-rollback within 5 minutes on failure
     - Deploy to production only from main branch after all stages pass
     - _Requirements: 16.4, 16.5, 21.8_
 
 - [ ] 24. Implement React frontend
-  - [ ] 24.1 Initialize React SPA with route-based code splitting
+  - [~] 24.1 Initialize React SPA with route-based code splitting
     - Set up React + TypeScript + Vite (or CRA) with React Router
     - Implement route-based lazy loading; ensure each route bundle < 200KB gzipped
     - Configure CDN asset serving (CloudFront or similar)
     - _Requirements: 14.1, 14.2_
-  - [ ] 24.2 Implement authentication UI and JWT handling
+  - [~] 24.2 Implement authentication UI and JWT handling
     - Create login, registration, and OAuth2 redirect pages
     - Store JWT in memory (not localStorage); use HttpOnly cookie for refresh token
     - Show loading indicator within 100ms on route navigation
     - _Requirements: 14.3, 1.1, 1.2_
-  - [ ] 24.3 Implement Task module UI
+  - [~] 24.3 Implement Task module UI
     - Create project list, project detail, task board (Kanban-style) views
     - Implement optimistic UI updates for task status changes; revert to server state on API failure
     - _Requirements: 14.5, 3.1, 3.2, 3.3_
-  - [ ] 24.4 Implement HR module UI
+  - [~] 24.4 Implement HR module UI
     - Create employee list/detail, attendance entry, payroll run, and performance review views
     - _Requirements: 5.1, 5.3, 5.4, 5.6_
-  - [ ] 24.5 Implement Inventory module UI
+  - [~] 24.5 Implement Inventory module UI
     - Create SKU list, stock adjustment, purchase order, supplier, and warehouse views
     - _Requirements: 6.1, 6.3, 6.6, 6.7_
-  - [ ] 24.6 Implement Accounting module UI
+  - [~] 24.6 Implement Accounting module UI
     - Create journal entry form, account balance view, AP/AR invoice lists, financial report views (trial balance, income statement, balance sheet)
     - _Requirements: 7.1, 7.4, 7.5, 7.8_
-  - [ ] 24.7 Implement Sales module UI
+  - [~] 24.7 Implement Sales module UI
     - Create customer list/detail, opportunity pipeline (Kanban), order management, invoice generation, and interaction log views
     - _Requirements: 8.1, 8.2, 8.4, 8.6, 8.8_
-  - [ ] 24.8 Implement Reporting and Analytics dashboard UI
+  - [~] 24.8 Implement Reporting and Analytics dashboard UI
     - Create per-module dashboards refreshing every 30 seconds without full page reload
     - Implement custom report builder, export trigger, and full-text search UI
     - Restrict analytics dashboard to ADMIN role
     - _Requirements: 9.1, 9.2, 9.4, 18.1, 18.2, 18.3, 18.4_
-  - [ ] 24.9 Configure frontend error reporting and Lighthouse CI
+  - [~] 24.9 Configure frontend error reporting and Lighthouse CI
     - Report JavaScript runtime errors to monitoring system within 5 seconds
     - Configure Lighthouse CI in pipeline to assert LCP < 2.5s and bundle size < 200KB gzipped per route
     - _Requirements: 14.4, 17.7_
-  - [ ] 24.10 Integrate React Query for server state management
+  - [~] 24.10 Integrate React Query for server state management
     - Install and configure `@tanstack/react-query`; wrap the app in `QueryClientProvider`
     - Replace all `useEffect`-based data fetching with `useQuery` / `useMutation` hooks
     - Configure stale time, retry logic, and background refetch intervals per data type
     - _Requirements: 14.4, 14.5_
-  - [ ] 24.11 Integrate Zustand for client-side state management
+  - [~] 24.11 Integrate Zustand for client-side state management
     - Install `zustand`; create stores for: auth state (current user, JWT), UI state (sidebar open/closed, active module), and notification queue
     - Remove any Redux or Context-based global state in favour of Zustand slices
     - _Requirements: 14.1_
 
 - [ ] 25. Implement feature flags
-  - [ ] 25.1 Implement feature flag storage and evaluation
+  - [~] 25.1 Implement feature flag storage and evaluation
     - Create a `feature_flags` table in `core_schema`: `(id UUID, tenant_id UUID nullable, user_id UUID nullable, flag_key VARCHAR, enabled BOOLEAN, rollout_percentage INT)`
     - Implement `FeatureFlagService.isEnabled(flagKey, tenantId, userId)` that evaluates: global default → tenant override → user override → percentage rollout (hash-based, deterministic)
     - _Requirements: 4.5_
-  - [ ] 25.2 Expose feature flag admin API and integrate at call sites
+  - [~] 25.2 Expose feature flag admin API and integrate at call sites
     - Create `GET/PUT /api/v1/admin/feature-flags/{key}` (ADMIN role only) to read and toggle flags
     - Annotate new or risky code paths with `@FeatureFlag("flag-key")` AOP interceptor that short-circuits to a safe fallback when the flag is disabled
     - Cache flag evaluations in L1 (Caffeine) with a 30-second TTL to avoid per-request DB hits
     - _Requirements: 4.5_
 
 - [ ] 26. Implement data retention and archival
-  - [ ] 26.1 Archive audit logs older than 1 year to S3
+  - [~] 26.1 Archive audit logs older than 1 year to S3
     - Implement a scheduled job (`@Scheduled(cron = "0 2 * * * SUN")`) that selects `core_schema.audit_log` partitions older than 12 months, exports them as gzip-compressed NDJSON to `s3://flowdesk-backups/audit-archive/{year}/{month}/`, and drops the partition
     - _Requirements: 13.3, 13.4_
-  - [ ] 26.2 Implement soft-delete cleanup jobs
+  - [~] 26.2 Implement soft-delete cleanup jobs
     - Implement a weekly scheduled job that hard-deletes rows where `deleted_at < NOW() - INTERVAL '90 days'` across all module schemas (tasks, projects, etc.)
     - Log the count of deleted rows per table to the audit log as a system-actor event
     - _Requirements: 3.4_
-  - [ ] 26.3 Implement GDPR delete workflow
+  - [~] 26.3 Implement GDPR delete workflow
     - Create `POST /api/v1/admin/gdpr/delete-request { subjectEmail }` (ADMIN role only)
     - Anonymize PII fields (name, email, contact details) for the given data subject across all module schemas; replace with `[REDACTED]` tokens
     - Publish a `gdpr.deletion.completed` event to the audit log and notify the requesting admin via event
     - _Requirements: 13.5_
 
 - [ ] 27. Implement backpressure mechanisms
-  - [ ] 27.1 Monitor Kafka consumer lag and reject requests when overloaded
+  - [~] 27.1 Monitor Kafka consumer lag and reject requests when overloaded
     - Expose a `KafkaHealthIndicator` that reads consumer group lag via the Kafka AdminClient
     - When any consumer group lag exceeds a configurable threshold (default: 10,000 messages), set a circuit-open flag in Redis (`system:overloaded = true`) with a 30-second TTL
     - In the gateway filter chain, check this flag and return HTTP 503 with `Retry-After: 30` when set
     - _Requirements: 17.8, 22.3_
-  - [ ] 27.2 Integrate Resilience4j circuit breakers on external dependency calls
+  - [~] 27.2 Integrate Resilience4j circuit breakers on external dependency calls
     - Add `resilience4j-spring-boot3` dependency; configure circuit breakers for: Redis calls, Elasticsearch calls, Kafka producer calls
     - Set thresholds: open after 50% failure rate over 10 calls; half-open after 10 seconds; log state transitions at WARN level
     - Fallback behaviour: Redis circuit open → fall through to L1/DB; Elasticsearch circuit open → return empty search results with `degraded: true` flag; Kafka circuit open → write to outbox only (relay will retry)
     - _Requirements: 11.5, 17.8, 22.3_
 
-- [ ] 28. Final checkpoint — Ensure all tests pass and all components are wired together, ask the user if questions arise.
+- [~] 28. Final checkpoint — Ensure all tests pass and all components are wired together, ask the user if questions arise.
 
 ## Optional Advanced Tasks
 
