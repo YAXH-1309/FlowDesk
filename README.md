@@ -149,6 +149,3 @@ CI/CD via GitHub Actions: PR validation → build + push to ECR → blue-green d
 | Availability | 99.97% |
 | RTO (failover) | ≤ 15 minutes |
 
-## Documentation
-
-See [report.md](./report.md) for the full product report including all module endpoints, domain models, event topics, and infrastructure details.
