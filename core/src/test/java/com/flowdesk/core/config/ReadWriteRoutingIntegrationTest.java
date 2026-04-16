@@ -39,7 +39,7 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
  *
  * <p>Requirements: 20.3</p>
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(classes = ReadWriteRoutingIntegrationTest.TestConfig.class)
 @EnableAutoConfiguration(exclude = {FlywayAutoConfiguration.class, KafkaAutoConfiguration.class})
 @DisabledIfSystemProperty(named = "testcontainers.disabled", matches = "true")
@@ -60,8 +60,6 @@ class ReadWriteRoutingIntegrationTest {
             Assumptions.assumeTrue(false, "Docker not available — skipping Testcontainers test");
         }
     }
-
-    @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
         String url  = POSTGRES.getJdbcUrl();
         String user = POSTGRES.getUsername();
