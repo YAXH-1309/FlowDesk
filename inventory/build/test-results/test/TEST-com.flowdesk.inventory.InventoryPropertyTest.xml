@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.inventory.InventoryPropertyTest" tests="3" skipped="3" failures="0" errors="0" timestamp="2026-04-16T11:30:00" hostname="DESKTOP-V1DP9AA" time="0.012">
+  <properties/>
+  <testcase name="p19 noLowStockEventWhenAboveThreshold" classname="com.flowdesk.inventory.InventoryPropertyTest" time="0.002">
+    <skipped/>
+  </testcase>
+  <testcase name="p19 lowStockEventPublishedWhenThresholdCrossed" classname="com.flowdesk.inventory.InventoryPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p19 nonExistentSkuRejectsStockAdjustment" classname="com.flowdesk.inventory.InventoryPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
