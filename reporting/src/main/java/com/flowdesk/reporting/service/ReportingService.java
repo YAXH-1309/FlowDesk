@@ -3,12 +3,13 @@ package com.flowdesk.reporting.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowdesk.core.context.TenantContext;
+import com.flowdesk.core.exception.BusinessRuleException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
 import com.flowdesk.reporting.domain.ReportDefinition;
 import com.flowdesk.reporting.domain.ReportExport;
 import com.flowdesk.reporting.dto.DefineReportRequest;
 import com.flowdesk.reporting.dto.ReportResult;
-import com.flowdesk.reporting.elasticsearch.SearchService;
+import com.flowdesk.reporting.readmodel.ReadModelService;
 import com.flowdesk.reporting.repository.ReportDefinitionRepository;
 import com.flowdesk.reporting.repository.ReportExportRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,39 +25,39 @@ import java.util.concurrent.TimeUnit;
 public class ReportingService {
 
     private static final long DASHBOARD_TTL_SECONDS = 300; // 5 min
+    private static final int SYNC_ROW_LIMIT = 10_000;
 
     private final ReportDefinitionRepository reportRepo;
     private final ReportExportRepository exportRepo;
     private final StringRedisTemplate redis;
-    private final DashboardMetricsService dashboardMetricsService;
-    private final ReportExecutionService reportExecutionService;
+    private final ReadModelService readModelService;   // CQRS read model — replaces direct DB reads
     private final ExportService exportService;
     private final ObjectMapper objectMapper;
-    private final SearchService searchService;
 
     public ReportingService(ReportDefinitionRepository reportRepo,
                              ReportExportRepository exportRepo,
                              StringRedisTemplate redis,
-                             DashboardMetricsService dashboardMetricsService,
-                             ReportExecutionService reportExecutionService,
+                             ReadModelService readModelService,
                              ExportService exportService,
-                             ObjectMapper objectMapper,
-                             SearchService searchService) {
+                             ObjectMapper objectMapper) {
         this.reportRepo = reportRepo;
         this.exportRepo = exportRepo;
         this.redis = redis;
-        this.dashboardMetricsService = dashboardMetricsService;
-        this.reportExecutionService = reportExecutionService;
+        this.readModelService = readModelService;
         this.exportService = exportService;
         this.objectMapper = objectMapper;
-        this.searchService = searchService;
     }
 
-    // ── Dashboards ────────────────────────────────────────────────────────────
+    // ── Dashboards — read model only ──────────────────────────────────────────
 
+    /**
+     * GET /api/v1/reporting/dashboards/{module}
+     * Reads exclusively from the Elasticsearch read model (CQRS read path).
+     * Redis caching with 5-minute TTL is applied on top.
+     */
     public Map<String, Object> getDashboard(String module) {
         UUID tenantId = TenantContext.getTenantId();
-        String cacheKey = "dashboard:" + tenantId + ":" + module;
+        String cacheKey = "dashboard:rm:" + tenantId + ":" + module;
 
         String cached = safeRedisGet(cacheKey);
         if (cached != null) {
@@ -70,12 +71,14 @@ public class ReportingService {
             }
         }
 
-        Map<String, Object> metrics = dashboardMetricsService.getMetrics(module, tenantId);
+        // Read from Elasticsearch read model — never PostgreSQL
+        Map<String, Object> metrics = readModelService.getDashboardMetrics(module, tenantId.toString());
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("module", module);
         response.put("generatedAt", OffsetDateTime.now().toString());
         response.put("cached", false);
+        response.put("readModel", "elasticsearch");
         response.put("metrics", metrics);
 
         try {
@@ -86,7 +89,7 @@ public class ReportingService {
         return response;
     }
 
-    // ── Report definitions ────────────────────────────────────────────────────
+    // ── Report definitions (write model — PostgreSQL) ─────────────────────────
 
     @Transactional
     public ReportDefinition defineReport(DefineReportRequest req) {
@@ -101,11 +104,46 @@ public class ReportingService {
         return reportRepo.save(def);
     }
 
-    // ── Report execution with cursor pagination ───────────────────────────────
+    // ── Report execution — read model only ────────────────────────────────────
 
+    /**
+     * POST /api/v1/reporting/reports/{id}/execute
+     * Executes the report against the Elasticsearch read model (CQRS read path).
+     * PostgreSQL is not queried.
+     */
     @Transactional(readOnly = true)
     public ReportResult executeReport(UUID reportId, String cursor, int pageSize) {
-        return reportExecutionService.execute(reportId, TenantContext.getTenantId(), cursor, pageSize);
+        UUID tenantId = TenantContext.getTenantId();
+        ReportDefinition def = reportRepo.findByIdAndTenantId(reportId, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
+
+        int page = decodeCursorPage(cursor);
+        int effectivePageSize = Math.min(pageSize, 1000);
+
+        // Build filters from report definition
+        Map<String, String> filters = new LinkedHashMap<>();
+        if (def.getFilterCriteria() != null && !def.getFilterCriteria().isBlank()) {
+            try {
+                Map<String, Object> raw = objectMapper.readValue(
+                        def.getFilterCriteria(), new TypeReference<Map<String, Object>>() {});
+                raw.forEach((k, v) -> filters.put(k, v != null ? v.toString() : null));
+            } catch (Exception e) {
+                throw new BusinessRuleException("Invalid filterCriteria JSON: " + e.getMessage());
+            }
+        }
+
+        ReadModelService.ReadModelPage rmPage = readModelService.queryModule(
+                def.getSourceModule(), tenantId.toString(), filters, page, effectivePageSize);
+
+        if (rmPage.total() > SYNC_ROW_LIMIT) {
+            throw new BusinessRuleException("Result set too large — use async export");
+        }
+
+        int nextPage = page + 1;
+        long nextOffset = (long) nextPage * effectivePageSize;
+        String nextCursor = nextOffset < rmPage.total() ? encodeCursorPage(nextPage) : null;
+
+        return new ReportResult(rmPage.rows(), (int) rmPage.total(), rmPage.rows().size(), nextCursor);
     }
 
     // ── Async export ──────────────────────────────────────────────────────────
@@ -137,10 +175,14 @@ public class ReportingService {
         );
     }
 
-    // ── Full-text search ──────────────────────────────────────────────────────
+    // ── Full-text search — read model only ────────────────────────────────────
 
+    /**
+     * GET /api/v1/reporting/search?q=...
+     * Searches the Elasticsearch read model (CQRS read path).
+     */
     public List<Map<String, Object>> search(String query) {
-        return searchService.search(query, TenantContext.getTenantId());
+        return readModelService.search(query, TenantContext.getTenantId().toString());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -159,5 +201,18 @@ public class ReportingService {
 
     private void safeRedisSet(String key, String value, long ttlSeconds) {
         try { redis.opsForValue().set(key, value, ttlSeconds, TimeUnit.SECONDS); } catch (Exception ignored) {}
+    }
+
+    private int decodeCursorPage(String cursor) {
+        if (cursor == null || cursor.isBlank()) return 0;
+        try {
+            return Integer.parseInt(new String(Base64.getDecoder().decode(cursor)));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private String encodeCursorPage(int page) {
+        return Base64.getEncoder().encodeToString(String.valueOf(page).getBytes());
     }
 }

@@ -1,8 +1,11 @@
 package com.flowdesk.reporting.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowdesk.reporting.domain.ReportDefinition;
 import com.flowdesk.reporting.domain.ReportExport;
-import com.flowdesk.reporting.dto.ReportResult;
+import com.flowdesk.reporting.readmodel.ReadModelService;
+import com.flowdesk.reporting.repository.ReportDefinitionRepository;
 import com.flowdesk.reporting.repository.ReportExportRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,22 +19,30 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Async export service.
+ * Fetches all rows from the Elasticsearch read model (CQRS read path) and generates CSV/XLSX.
+ */
 @Service
 public class ExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExportService.class);
     private static final String EXPORT_TOPIC = "reporting.export.ready";
+    private static final int PAGE_SIZE = 1_000;
 
-    private final ReportExecutionService reportExecutionService;
+    private final ReadModelService readModelService;
+    private final ReportDefinitionRepository reportRepo;
     private final ReportExportRepository exportRepo;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    public ExportService(ReportExecutionService reportExecutionService,
+    public ExportService(ReadModelService readModelService,
+                         ReportDefinitionRepository reportRepo,
                          ReportExportRepository exportRepo,
                          KafkaTemplate<String, String> kafkaTemplate,
                          ObjectMapper objectMapper) {
-        this.reportExecutionService = reportExecutionService;
+        this.readModelService = readModelService;
+        this.reportRepo = reportRepo;
         this.exportRepo = exportRepo;
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
@@ -47,16 +58,30 @@ public class ExportService {
         }
 
         try {
-            // 1. Fetch all rows by paginating through all pages
-            List<Map<String, Object>> allRows = new ArrayList<>();
-            String cursor = null;
-            do {
-                ReportResult page = reportExecutionService.execute(reportId, tenantId, cursor, ReportExecutionService.PAGE_SIZE);
-                allRows.addAll(page.rows());
-                cursor = page.nextCursor();
-            } while (cursor != null);
+            // 1. Load report definition to get module + filters
+            ReportDefinition def = reportRepo.findByIdAndTenantId(reportId, tenantId).orElse(null);
+            if (def == null) {
+                log.warn("Report definition {} not found for export {}", reportId, exportId);
+                export.setStatus("FAILED");
+                exportRepo.save(export);
+                return;
+            }
 
-            // 2. Generate file bytes
+            Map<String, String> filters = parseFilters(def.getFilterCriteria());
+
+            // 2. Fetch all rows from Elasticsearch read model (paginated)
+            List<Map<String, Object>> allRows = new ArrayList<>();
+            int page = 0;
+            long total;
+            do {
+                ReadModelService.ReadModelPage rmPage = readModelService.queryModule(
+                        def.getSourceModule(), tenantId.toString(), filters, page, PAGE_SIZE);
+                allRows.addAll(rmPage.rows());
+                total = rmPage.total();
+                page++;
+            } while ((long) page * PAGE_SIZE < total);
+
+            // 3. Generate file bytes
             byte[] data;
             if ("XLSX".equalsIgnoreCase(format)) {
                 log.info("XLSX generation stub: would generate XLSX for export {}", exportId);
@@ -65,22 +90,38 @@ public class ExportService {
                 data = generateCsv(allRows);
             }
 
-            // 3. Upload to S3 (stub)
+            // 4. Upload to S3 (stub)
             String s3Key = uploadToS3(exportId, format, data);
 
-            // 4. Update export status
+            // 5. Update export status
             export.setStatus("READY");
             export.setS3Key(s3Key);
             export.setCompletedAt(OffsetDateTime.now());
             exportRepo.save(export);
 
-            // 5. Publish Kafka event
+            // 6. Publish Kafka event
             publishExportReadyEvent(exportId, tenantId, reportId, s3Key, export.getRequestedBy());
 
         } catch (Exception e) {
             log.error("Failed to process export {}: {}", exportId, e.getMessage(), e);
             export.setStatus("FAILED");
             exportRepo.save(export);
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Map<String, String> parseFilters(String filterCriteria) {
+        if (filterCriteria == null || filterCriteria.isBlank()) return Map.of();
+        try {
+            Map<String, Object> raw = objectMapper.readValue(
+                    filterCriteria, new TypeReference<Map<String, Object>>() {});
+            Map<String, String> result = new LinkedHashMap<>();
+            raw.forEach((k, v) -> result.put(k, v != null ? v.toString() : null));
+            return result;
+        } catch (Exception e) {
+            log.warn("Could not parse filterCriteria for export: {}", e.getMessage());
+            return Map.of();
         }
     }
 
