@@ -6,5 +6,6 @@ import java.util.Map;
 public record ReportResult(
         List<Map<String, Object>> rows,
         int totalRows,
+        int pageSize,
         String nextCursor  // null when no more pages
 ) {}

@@ -1,55 +1,89 @@
 package com.flowdesk.reporting.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowdesk.core.context.TenantContext;
-import com.flowdesk.core.exception.BusinessRuleException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
 import com.flowdesk.reporting.domain.ReportDefinition;
 import com.flowdesk.reporting.domain.ReportExport;
 import com.flowdesk.reporting.dto.DefineReportRequest;
 import com.flowdesk.reporting.dto.ReportResult;
+import com.flowdesk.reporting.elasticsearch.SearchService;
 import com.flowdesk.reporting.repository.ReportDefinitionRepository;
 import com.flowdesk.reporting.repository.ReportExportRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public class ReportingService {
 
-    private static final int SYNC_ROW_LIMIT = 10_000;
-    private static final int PAGE_SIZE = 1_000;
     private static final long DASHBOARD_TTL_SECONDS = 300; // 5 min
 
     private final ReportDefinitionRepository reportRepo;
     private final ReportExportRepository exportRepo;
     private final StringRedisTemplate redis;
+    private final DashboardMetricsService dashboardMetricsService;
+    private final ReportExecutionService reportExecutionService;
+    private final ExportService exportService;
+    private final ObjectMapper objectMapper;
+    private final SearchService searchService;
 
     public ReportingService(ReportDefinitionRepository reportRepo,
                              ReportExportRepository exportRepo,
-                             StringRedisTemplate redis) {
+                             StringRedisTemplate redis,
+                             DashboardMetricsService dashboardMetricsService,
+                             ReportExecutionService reportExecutionService,
+                             ExportService exportService,
+                             ObjectMapper objectMapper,
+                             SearchService searchService) {
         this.reportRepo = reportRepo;
         this.exportRepo = exportRepo;
         this.redis = redis;
+        this.dashboardMetricsService = dashboardMetricsService;
+        this.reportExecutionService = reportExecutionService;
+        this.exportService = exportService;
+        this.objectMapper = objectMapper;
+        this.searchService = searchService;
     }
 
     // ── Dashboards ────────────────────────────────────────────────────────────
 
     public Map<String, Object> getDashboard(String module) {
-        String cacheKey = "dashboard:" + TenantContext.getTenantId() + ":" + module;
+        UUID tenantId = TenantContext.getTenantId();
+        String cacheKey = "dashboard:" + tenantId + ":" + module;
+
         String cached = safeRedisGet(cacheKey);
         if (cached != null) {
-            return Map.of("module", module, "cached", true, "data", cached);
+            try {
+                Map<String, Object> cachedMap = objectMapper.readValue(
+                        cached, new TypeReference<Map<String, Object>>() {});
+                cachedMap.put("cached", true);
+                return cachedMap;
+            } catch (Exception ignored) {
+                // fall through to re-fetch on deserialization error
+            }
         }
-        // Stub: real impl queries module-specific metrics
-        Map<String, Object> metrics = Map.of("module", module, "generatedAt",
-                java.time.OffsetDateTime.now().toString());
-        safeRedisSet(cacheKey, metrics.toString(), DASHBOARD_TTL_SECONDS);
-        return metrics;
+
+        Map<String, Object> metrics = dashboardMetricsService.getMetrics(module, tenantId);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("module", module);
+        response.put("generatedAt", OffsetDateTime.now().toString());
+        response.put("cached", false);
+        response.put("metrics", metrics);
+
+        try {
+            String json = objectMapper.writeValueAsString(response);
+            safeRedisSet(cacheKey, json, DASHBOARD_TTL_SECONDS);
+        } catch (Exception ignored) {}
+
+        return response;
     }
 
     // ── Report definitions ────────────────────────────────────────────────────
@@ -70,26 +104,8 @@ public class ReportingService {
     // ── Report execution with cursor pagination ───────────────────────────────
 
     @Transactional(readOnly = true)
-    public ReportResult executeReport(UUID reportId, String cursor) {
-        reportRepo.findByIdAndTenantId(reportId, TenantContext.getTenantId())
-                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
-
-        // Stub result set — real impl queries the source module's read replica
-        int offset = cursor != null ? Integer.parseInt(cursor) : 0;
-        int totalRows = 500; // stub
-
-        if (totalRows > SYNC_ROW_LIMIT) {
-            throw new BusinessRuleException("Result set too large — use async export");
-        }
-
-        List<Map<String, Object>> rows = new ArrayList<>();
-        int end = Math.min(offset + PAGE_SIZE, totalRows);
-        for (int i = offset; i < end; i++) {
-            rows.add(Map.of("row", i));
-        }
-
-        String nextCursor = end < totalRows ? String.valueOf(end) : null;
-        return new ReportResult(rows, totalRows, nextCursor);
+    public ReportResult executeReport(UUID reportId, String cursor, int pageSize) {
+        return reportExecutionService.execute(reportId, TenantContext.getTenantId(), cursor, pageSize);
     }
 
     // ── Async export ──────────────────────────────────────────────────────────
@@ -110,22 +126,21 @@ public class ReportingService {
         return saved;
     }
 
-    @Async
     public void processExportAsync(UUID exportId) {
-        exportRepo.findById(exportId).ifPresent(export -> {
-            // Stub: real impl generates CSV/XLSX and uploads to S3
-            export.setStatus("READY");
-            export.setS3Key("exports/" + exportId + "." + export.getFormat().toLowerCase());
-            export.setCompletedAt(java.time.OffsetDateTime.now());
-            exportRepo.save(export);
-        });
+        exportRepo.findById(exportId).ifPresent(export ->
+            exportService.processExport(
+                    export.getId(),
+                    export.getTenantId(),
+                    export.getReportId(),
+                    export.getFormat()
+            )
+        );
     }
 
     // ── Full-text search ──────────────────────────────────────────────────────
 
     public List<Map<String, Object>> search(String query) {
-        // Stub: real impl queries Elasticsearch
-        return List.of(Map.of("query", query, "results", List.of()));
+        return searchService.search(query, TenantContext.getTenantId());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

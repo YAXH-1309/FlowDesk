@@ -184,55 +184,55 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Create `POST /api/v1/sales/interactions` persisting calls, emails, meetings linked to customer or opportunity with timestamp and author
     - _Requirements: 8.8_
 
-- [-] 15. Implement Reporting Module and Elasticsearch integration
-  - [-] 15.1 Implement pre-built dashboards per module
+- [x] 15. Implement Reporting Module and Elasticsearch integration
+  - [x] 15.1 Implement pre-built dashboards per module
     - Create `GET /api/v1/reporting/dashboards/{module}` returning key metrics refreshed at <= 5 minutes
     - Cache dashboard results in Redis with 5-minute TTL
     - _Requirements: 9.1, 18.1, 18.2_
-  - [~] 15.2 Implement custom report definition and execution
+  - [x] 15.2 Implement custom report definition and execution
     - Create `POST /api/v1/reporting/reports` (define report) and `POST /api/v1/reporting/reports/{id}/execute`
     - Execute against read replicas; return results within 10 seconds for up to 100,000 rows
     - Enforce RBAC: filter results to only resources the requesting user is authorized to view
     - _Requirements: 9.2, 9.3, 9.7_
-  - [~] 15.3 Implement async data export (CSV/XLSX)
+  - [x] 15.3 Implement async data export (CSV/XLSX)
     - Create `GET /api/v1/reporting/reports/{id}/export`
     - For result sets > 10,000 rows, process asynchronously and notify user via event when file is ready; store export in S3
     - _Requirements: 9.4, 9.5_
-  - [~] 15.4 Implement Elasticsearch full-text search
+  - [x] 15.4 Implement Elasticsearch full-text search
     - Configure Elasticsearch client and index mappings for all module entities
     - Create `GET /api/v1/reporting/search?q=...` returning results within 500ms for indexed datasets
     - Sync data to Elasticsearch via Kafka consumer on entity change events
     - _Requirements: 9.6_
-  - [~] 15.5 Enforce max sync query size and async-only threshold
+  - [x] 15.5 Enforce max sync query size and async-only threshold
     - Reject synchronous report execution requests for datasets exceeding 10,000 rows; return HTTP 422 with message "Result set too large — use async export"
     - Route all requests above the threshold to the async export flow (task 15.3)
     - _Requirements: 9.3, 9.5_
-  - [~] 15.6 Implement cursor-based pagination for large result sets
+  - [x] 15.6 Implement cursor-based pagination for large result sets
     - Replace offset-based pagination in `POST /api/v1/reporting/reports/{id}/execute` with keyset/cursor pagination
     - Accept `cursor` query parameter; return `nextCursor` in response envelope; default page size 1,000 rows
     - Prevents full-table scans and keeps P95 latency within SLO under large datasets
     - _Requirements: 9.3, 22.1_
 
-- [~] 16. Implement API Gateway layer
-  - [ ] 16.1 Implement sliding window rate limiter using Redis
+- [-] 16. Implement API Gateway layer
+  - [~] 16.1 Implement sliding window rate limiter using Redis
     - Implement `RateLimitFilter` using Redis with key `rate:{userId}` (100 req/min) and `rate:ip:{ip}` (20 req/min for unauthenticated)
     - Return 429 with `Retry-After` header on limit exceeded
     - TTL on Redis key equals window duration (60 seconds)
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
-  - [ ] 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
+  - [~] 16.2 Write property test P10: Rate limiting enforces sliding window with correct HTTP response
     - **Property 10: Rate limiting enforces sliding window with correct HTTP response**
     - **Validates: Requirements 10.1, 10.3, 10.4**
     - Generate request bursts exceeding 100/min; assert all requests beyond limit receive 429 with Retry-After; assert sliding window correctly counts at boundaries
-  - [ ] 16.3 Configure versioned REST endpoints and OpenAPI spec
+  - [~] 16.3 Configure versioned REST endpoints and OpenAPI spec
     - Ensure all endpoints follow `/api/v1/` pattern
     - Configure SpringDoc OpenAPI 3.0 to auto-generate spec from annotations, kept in sync with implementation
     - _Requirements: 10.6, 10.7_
-  - [ ] 16.4 Implement central request routing and JWT validation at gateway level
+  - [~] 16.4 Implement central request routing and JWT validation at gateway level
     - Implement a `GatewayRoutingFilter` (Spring Cloud Gateway or custom `OncePerRequestFilter`) that routes requests to the correct module handler based on path prefix
     - Move JWT validation out of individual modules into a single gateway-level filter so auth is enforced uniformly before any module code executes
     - Return 401 for missing/invalid/expired JWT before the request reaches module logic
     - _Requirements: 2.5, 2.6, 10.6_
-  - [ ] 16.5 Inject Correlation ID into every request
+  - [~] 16.5 Inject Correlation ID into every request
     - In the gateway filter chain, read `X-Correlation-ID` header if present; otherwise generate a UUID
     - Store in `MDC` (Mapped Diagnostic Context) so it appears in every log line for that request
     - Forward the header downstream and include it in all API responses
