@@ -58,6 +58,13 @@ spring:
                 - private-key-location: ${SAML_PRIVATE_KEY:classpath:saml/private.key}
                   certificate-location: ${SAML_CERTIFICATE:classpath:saml/public.crt}
 
+springdoc:
+  api-docs:
+    path: /api/v1/api-docs
+  swagger-ui:
+    path: /api/v1/swagger-ui.html
+    operationsSorter: alpha
+
 app:
   jwt:
     # Base64-encoded 256-bit secret — override via APP_JWT_SECRET env var in production

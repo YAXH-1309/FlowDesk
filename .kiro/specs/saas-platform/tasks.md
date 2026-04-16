@@ -214,7 +214,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - _Requirements: 9.3, 22.1_
 
 - [-] 16. Implement API Gateway layer
-  - [~] 16.1 Implement sliding window rate limiter using Redis
+  - [-] 16.1 Implement sliding window rate limiter using Redis
     - Implement `RateLimitFilter` using Redis with key `rate:{userId}` (100 req/min) and `rate:ip:{ip}` (20 req/min for unauthenticated)
     - Return 429 with `Retry-After` header on limit exceeded
     - TTL on Redis key equals window duration (60 seconds)
