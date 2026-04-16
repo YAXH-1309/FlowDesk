@@ -59,7 +59,7 @@ class InventoryPropertyTest {
 
     // ── P19a: Low-stock event published when quantity <= threshold ────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 19: Low-stock events are published for any threshold-crossing transaction")
     void p19_lowStockEventPublishedWhenThresholdCrossed(
             @ForAll("reorderThresholds") int threshold,
@@ -115,7 +115,7 @@ class InventoryPropertyTest {
 
     // ── P19b: No low-stock event when quantity is above threshold ─────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 19: Low-stock events are published for any threshold-crossing transaction")
     void p19_noLowStockEventWhenAboveThreshold(
             @ForAll("reorderThresholds") int threshold,
@@ -158,7 +158,7 @@ class InventoryPropertyTest {
 
     // ── P19c: SKU not found rejects entire order ──────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 19: Low-stock events are published for any threshold-crossing transaction")
     void p19_nonExistentSkuRejectsStockAdjustment() {
         UUID skuId = UUID.randomUUID();

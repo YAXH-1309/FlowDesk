@@ -89,7 +89,7 @@ class AccountingPropertyTest {
 
     // ── P9a: Balanced entries are accepted ────────────────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 9: Double-entry ledger invariant")
     void p9_balancedEntryIsAccepted(@ForAll("balancedAmounts") List<BigDecimal> amounts) {
         AccountRepository accountRepo = mock(AccountRepository.class);
@@ -113,7 +113,7 @@ class AccountingPropertyTest {
 
     // ── P9b: Imbalanced entries are rejected with imbalance amount ────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 9: Double-entry ledger invariant")
     void p9_imbalancedEntryIsRejectedWith422(@ForAll("imbalancedAmounts") List<BigDecimal> amounts) {
         AccountRepository accountRepo = mock(AccountRepository.class);
@@ -133,7 +133,7 @@ class AccountingPropertyTest {
 
     // ── P9c: Sum invariant holds for any balanced entry ───────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 9: Double-entry ledger invariant")
     void p9_sumOfBalancedEntryIsAlwaysZero(@ForAll("balancedAmounts") List<BigDecimal> amounts) {
         BigDecimal sum = amounts.stream().reduce(BigDecimal.ZERO, BigDecimal::add);

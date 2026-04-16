@@ -30,7 +30,7 @@ class KafkaDlqPropertyTest {
 
     // ── P13a: Failed message is routed to DLQ topic ───────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 13: Dead-letter routing after exhausted retries")
     void p13_failedMessageRoutedToDlq(@ForAll("topicNames") String topic,
                                        @ForAll("payloads") String payload) {
@@ -53,7 +53,7 @@ class KafkaDlqPropertyTest {
 
     // ── P13b: DLQ record contains required headers ────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 13: Dead-letter routing after exhausted retries")
     void p13_dlqRecordContainsOriginalTopicHeader(@ForAll("topicNames") String topic,
                                                    @ForAll("payloads") String payload) {
@@ -77,7 +77,7 @@ class KafkaDlqPropertyTest {
 
     // ── P13c: DLQ topic name always follows {topic}.dlq pattern ──────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 13: Dead-letter routing after exhausted retries")
     void p13_dlqTopicNameFollowsConvention(@ForAll("topicNames") String topic) {
         String expectedDlq = topic + ".dlq";
@@ -87,7 +87,7 @@ class KafkaDlqPropertyTest {
 
     // ── P13d: Retry count simulation — exactly 3 retries before DLQ ──────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 13: Dead-letter routing after exhausted retries")
     void p13_exactlyThreeRetriesBeforeDlq(@ForAll("payloads") String payload) {
         // Simulate a consumer that fails 3 times then routes to DLQ

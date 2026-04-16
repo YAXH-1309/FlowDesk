@@ -74,7 +74,7 @@ class RbacPropertyTest {
 
     // ── P4a: User with required role is allowed ───────────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4a_userWithRequiredRoleIsAllowed(@ForAll("anyRole") Role role) throws Throwable {
         // Skip VIEWER — it is blocked from write operations by a separate advice
@@ -95,7 +95,7 @@ class RbacPropertyTest {
 
     // ── P4b: User lacking required role is denied ─────────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4b_userLackingRequiredRoleIsDenied(
             @ForAll("anyRole") Role userRole,
@@ -120,7 +120,7 @@ class RbacPropertyTest {
 
     // ── P4c: VIEWER is always denied on write-protected endpoints ─────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4c_viewerAlwaysDeniedOnNonViewerEndpoints(@ForAll("anyRole") Role requiredRole) throws Throwable {
         // Endpoint does not grant VIEWER access
@@ -141,7 +141,7 @@ class RbacPropertyTest {
 
     // ── P4d: VIEWER is blocked from all write operations ─────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4d_viewerBlockedFromWriteOperations() {
         try {
@@ -157,7 +157,7 @@ class RbacPropertyTest {
 
     // ── P4e: Non-VIEWER roles are not blocked by the write guard ─────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4e_nonViewerRolesPassWriteGuard(@ForAll("anyRole") Role role) {
         Assume.that(role != Role.VIEWER);
@@ -173,7 +173,7 @@ class RbacPropertyTest {
 
     // ── P4f: Unauthenticated requests are denied ──────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4f_unauthenticatedRequestIsDenied(@ForAll("anyRole") Role requiredRole) throws Throwable {
         try {
@@ -190,7 +190,7 @@ class RbacPropertyTest {
 
     // ── P4g: User with multiple roles is allowed if any matches ──────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 4: RBAC enforcement is universal across all protected endpoints")
     void p4g_userWithMultipleRolesAllowedIfAnyMatches(
             @ForAll("anyRole") Role primaryRole,

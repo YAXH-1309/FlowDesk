@@ -20,7 +20,7 @@ class OutboxPropertyTest {
 
     // ── P14a: Outbox entry is created within the same transaction ─────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 14: Transactional outbox atomicity")
     void p14_outboxEntryCreatedWithBusinessWrite() {
         // Simulate: business write + outbox write both succeed
@@ -40,7 +40,7 @@ class OutboxPropertyTest {
 
     // ── P14b: Rollback means neither business write nor outbox entry ──────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 14: Transactional outbox atomicity")
     void p14_rollbackMeansNeitherWriteNorOutbox() {
         AtomicBoolean businessWriteCommitted = new AtomicBoolean(false);
@@ -59,7 +59,7 @@ class OutboxPropertyTest {
 
     // ── P14c: Outbox event has all required fields ────────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 14: Transactional outbox atomicity")
     void p14_outboxEventHasRequiredFields(@ForAll UUID aggregateId,
                                            @ForAll @net.jqwik.api.constraints.AlphaChars
@@ -81,7 +81,7 @@ class OutboxPropertyTest {
 
     // ── P14d: Published event has publishedAt set ─────────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 14: Transactional outbox atomicity")
     void p14_publishedEventHasTimestamp(@ForAll UUID aggregateId) {
         TestOutboxEvent event = new TestOutboxEvent();

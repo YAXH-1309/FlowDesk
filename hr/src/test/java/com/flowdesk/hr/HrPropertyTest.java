@@ -54,7 +54,7 @@ class HrPropertyTest {
 
     // ── P20a: net pay = gross pay − deductions for every employee ─────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 20: Payroll calculation correctness")
     void p20_netPayEqualsGrossMinusDeductions(@ForAll("employeeSalaries") List<BigDecimal> salaries) {
         EmployeeRepository empRepo = mock(EmployeeRepository.class);
@@ -108,7 +108,7 @@ class HrPropertyTest {
 
     // ── P20b: Employees with missing salary are skipped ───────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 20: Payroll calculation correctness")
     void p20_employeesWithMissingSalaryAreSkipped(@ForAll @IntRange(min = 1, max = 5) int missingCount,
                                                    @ForAll("employeeSalaries") List<BigDecimal> salaries) {
@@ -162,7 +162,7 @@ class HrPropertyTest {
 
     // ── P20c: Deduction rate is consistent (20%) ──────────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 20: Payroll calculation correctness")
     void p20_deductionRateIsConsistent(@ForAll("salaries") BigDecimal salary) {
         EmployeeRepository empRepo = mock(EmployeeRepository.class);

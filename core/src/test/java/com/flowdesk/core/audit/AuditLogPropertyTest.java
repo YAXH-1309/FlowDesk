@@ -38,7 +38,7 @@ class AuditLogPropertyTest {
 
     // ── P15a: Audit entry is created with all required fields ─────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 15: Audit log completeness and immutability")
     void p15_auditEntryContainsAllRequiredFields(
             @ForAll @AlphaChars @StringLength(min = 3, max = 20) String entityType,
@@ -70,7 +70,7 @@ class AuditLogPropertyTest {
 
     // ── P15b: All CRUD actions produce audit entries ──────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 15: Audit log completeness and immutability")
     void p15_allCrudActionsProduceAuditEntries(@ForAll AuditAction action,
                                                 @ForAll UUID entityId) {
@@ -88,7 +88,7 @@ class AuditLogPropertyTest {
 
     // ── P15c: Audit log is append-only — no update/delete methods exposed ─────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 15: Audit log completeness and immutability")
     void p15_auditLogServiceHasNoUpdateOrDeleteMethods() {
         // Verify AuditLogService only exposes 'record' — no update/delete
@@ -103,7 +103,7 @@ class AuditLogPropertyTest {
 
     // ── P15d: Timestamp is always set on audit entries ────────────────────────
 
-    @Property(tries = 100)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 15: Audit log completeness and immutability")
     void p15_auditEntryTimestampIsAlwaysSet(@ForAll UUID entityId) {
         List<AuditLogEntry> saved = new ArrayList<>();

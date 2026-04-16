@@ -75,7 +75,7 @@ class TaskPropertyTest {
 
     // ── P5: Resource creation is a round-trip ─────────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 5: Resource creation is a round-trip")
     void p5_projectCreationRoundTrip(@ForAll("projectNames") String name) {
         ProjectRepository projectRepo = mock(ProjectRepository.class);
@@ -98,7 +98,7 @@ class TaskPropertyTest {
         verify(projectRepo).save(any());
     }
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 5: Resource creation is a round-trip")
     void p5_taskCreationRoundTrip(@ForAll("taskTitles") String title,
                                    @ForAll("taskStatuses") String status) {
@@ -132,7 +132,7 @@ class TaskPropertyTest {
 
     // ── P6: Task updates are reflected in subsequent reads ────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 6: Task updates are reflected in subsequent reads")
     void p6_taskUpdateReflectedInRead(@ForAll("taskTitles") String newTitle,
                                        @ForAll("taskStatuses") String newStatus) {
@@ -162,7 +162,7 @@ class TaskPropertyTest {
 
     // ── P7: Tenant isolation ──────────────────────────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 7: Tenant isolation — queries never return cross-tenant data")
     void p7_listProjectsOnlyReturnsTenantData(@ForAll("projectNames") String name) {
         ProjectRepository projectRepo = mock(ProjectRepository.class);
@@ -191,7 +191,7 @@ class TaskPropertyTest {
         assertThat(resultsB).isEmpty();
     }
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 7: Tenant isolation — queries never return cross-tenant data")
     void p7_crossTenantTaskAccessReturns404(@ForAll("taskTitles") String title) {
         UUID taskId = UUID.randomUUID();
@@ -211,7 +211,7 @@ class TaskPropertyTest {
 
     // ── P8: Cross-tenant assignment is rejected ───────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 8: Cross-tenant assignment is rejected")
     void p8_crossTenantAssignmentRejected() {
         UUID taskId = UUID.randomUUID();

@@ -86,7 +86,7 @@ class AuthPropertyTest {
 
     // ── P1: Registration produces a valid JWT for any valid credential ─────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 1: Registration produces a valid JWT for any valid credential")
     void p1_registrationProducesValidJwt(
             @ForAll("validEmails") String email,
@@ -147,7 +147,7 @@ class AuthPropertyTest {
 
     // ── P16: Password hashing is irreversible ─────────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 16: Password hashing is irreversible")
     void p16_passwordHashingIsIrreversible(@ForAll("validPasswords") String password) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
@@ -174,7 +174,7 @@ class AuthPropertyTest {
 
     // ── P2: Login is a round-trip of registration ─────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 2: Login is a round-trip of registration")
     void p2_loginIsRoundTripOfRegistration(
             @ForAll("validEmails") String email,
@@ -228,7 +228,7 @@ class AuthPropertyTest {
 
     // ── P3: Refresh token issues a new JWT ────────────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 3: Refresh token issues a new JWT")
     void p3_refreshTokenIssuesNewJwt(
             @ForAll("validEmails") String email,

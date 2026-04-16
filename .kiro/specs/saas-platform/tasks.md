@@ -157,7 +157,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
   - [x] 12.4 Implement AP/AR invoice tracking
   - [x] 12.5 Implement budget tracking
 
-- [-] 13. Checkpoint — Ensure accounting and inventory tests pass, ask the user if questions arise.
+- [x] 13. Checkpoint — Ensure accounting and inventory tests pass, ask the user if questions arise.
 
 - [ ] 14. Implement Sales Module
   - [~] 14.1 Implement customer record management

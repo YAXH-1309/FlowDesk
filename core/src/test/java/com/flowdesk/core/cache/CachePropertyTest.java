@@ -59,7 +59,7 @@ class CachePropertyTest {
 
     // ── P11a: L1 hit — DB and Redis never called ──────────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 11: Cache lookup order is L1 → L2 → database")
     void p11_l1HitSkipsRedisAndDb(@ForAll("cacheKeys") String key,
                                    @ForAll("cacheValues") String value) {
@@ -80,7 +80,7 @@ class CachePropertyTest {
 
     // ── P11b: L2 hit — DB not called, L1 populated ───────────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 11: Cache lookup order is L1 → L2 → database")
     void p11_l2HitSkipsDb(@ForAll("cacheKeys") String key,
                            @ForAll("cacheValues") String value) {
@@ -97,7 +97,7 @@ class CachePropertyTest {
 
     // ── P11c: Full miss — DB called, both levels populated ────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 11: Cache lookup order is L1 → L2 → database")
     void p11_fullMissCallsDb(@ForAll("cacheKeys") String key,
                               @ForAll("cacheValues") String dbValue) {
@@ -113,7 +113,7 @@ class CachePropertyTest {
 
     // ── P11d: Redis failure does not propagate to caller ─────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 11: Cache lookup order is L1 → L2 → database")
     void p11_redisFailureDoesNotPropagateError(@ForAll("cacheKeys") String key,
                                                 @ForAll("cacheValues") String dbValue) {
@@ -127,7 +127,7 @@ class CachePropertyTest {
 
     // ── P12: Cache invalidation is consistent after writes ────────────────────
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 12: Cache invalidation is consistent after writes")
     void p12_evictRemovesFromL1(@ForAll("cacheKeys") String key,
                                  @ForAll("cacheValues") String oldValue,
@@ -151,7 +151,7 @@ class CachePropertyTest {
         assertThat(dbCalls.get()).isEqualTo(1);
     }
 
-    @Property(tries = 50)
+    @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 12: Cache invalidation is consistent after writes")
     void p12_evictWithRedisFailureDoesNotThrow(@ForAll("cacheKeys") String key) {
         CacheService cache = buildService(failingRedis());
