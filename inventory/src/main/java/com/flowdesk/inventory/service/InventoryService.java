@@ -3,7 +3,9 @@ package com.flowdesk.inventory.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowdesk.core.context.TenantContext;
 import com.flowdesk.core.exception.BusinessRuleException;
+import com.flowdesk.core.exception.ConflictException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.lock.DistributedLockService;
 import com.flowdesk.inventory.domain.PoLineItem;
 import com.flowdesk.inventory.domain.PurchaseOrder;
 import com.flowdesk.inventory.domain.Sku;
@@ -30,16 +32,19 @@ public class InventoryService {
     private final PurchaseOrderRepository poRepo;
     private final InventoryOutboxRepository outboxRepo;
     private final ObjectMapper objectMapper;
+    private final DistributedLockService lockService;
 
     public InventoryService(SkuRepository skuRepo, StockRepository stockRepo,
                              PurchaseOrderRepository poRepo,
                              InventoryOutboxRepository outboxRepo,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             DistributedLockService lockService) {
         this.skuRepo = skuRepo;
         this.stockRepo = stockRepo;
         this.poRepo = poRepo;
         this.outboxRepo = outboxRepo;
         this.objectMapper = objectMapper;
+        this.lockService = lockService;
     }
 
     // ── SKU ───────────────────────────────────────────────────────────────────
@@ -57,6 +62,11 @@ public class InventoryService {
     @Transactional
     public Stock adjustStock(UUID skuId, AdjustStockRequest req) {
         UUID tenantId = TenantContext.getTenantId();
+        String lockKey = "lock:stock:" + skuId + ":" + req.warehouseId();
+        if (!lockService.tryLock(lockKey, 30)) {
+            throw new ConflictException("Stock update already in progress for this SKU/warehouse");
+        }
+        try {
         Sku sku = skuRepo.findByIdAndTenantId(skuId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("SKU not found"));
 
@@ -79,6 +89,9 @@ public class InventoryService {
                             "reorderThreshold", sku.getReorderThreshold()));
         }
         return saved;
+        } finally {
+            lockService.unlock(lockKey);
+        }
     }
 
     // ── Purchase Orders ───────────────────────────────────────────────────────

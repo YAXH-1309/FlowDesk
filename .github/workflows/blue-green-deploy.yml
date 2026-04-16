@@ -1,0 +1,85 @@
+name: Blue-Green Deploy
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name flowdesk-prod --region ${{ env.AWS_REGION }}
+
+      - name: Determine inactive environment (blue/green)
+        id: env
+        run: |
+          ACTIVE=$(kubectl get service flowdesk-active -o jsonpath='{.spec.selector.slot}' 2>/dev/null || echo "blue")
+          if [ "$ACTIVE" = "blue" ]; then
+            echo "target=green" >> $GITHUB_OUTPUT
+          else
+            echo "target=blue" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to inactive environment
+        run: |
+          TARGET=${{ steps.env.outputs.target }}
+          IMAGE_TAG=${{ inputs.image_tag }}
+          ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}
+
+          kubectl set image deployment/flowdesk-backend-${TARGET} \
+            backend=${ECR_REGISTRY}/flowdesk/backend:${IMAGE_TAG} \
+            -n flowdesk
+
+          kubectl rollout status deployment/flowdesk-backend-${TARGET} \
+            -n flowdesk --timeout=5m
+
+      - name: Health check on inactive environment
+        run: |
+          TARGET=${{ steps.env.outputs.target }}
+          # Wait for all pods to be ready
+          kubectl wait --for=condition=ready pod \
+            -l app=flowdesk-backend,slot=${TARGET} \
+            -n flowdesk --timeout=3m
+
+          # Verify health endpoint
+          POD=$(kubectl get pod -l app=flowdesk-backend,slot=${TARGET} -n flowdesk -o jsonpath='{.items[0].metadata.name}')
+          kubectl exec $POD -n flowdesk -- curl -sf http://localhost:8080/actuator/health
+
+      - name: Switch traffic to new environment
+        run: |
+          TARGET=${{ steps.env.outputs.target }}
+          kubectl patch service flowdesk-active -n flowdesk \
+            -p "{\"spec\":{\"selector\":{\"slot\":\"${TARGET}\"}}}"
+          echo "Traffic switched to ${TARGET}"
+
+      - name: Auto-rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed — rolling back..."
+          ACTIVE=$(kubectl get service flowdesk-active -o jsonpath='{.spec.selector.slot}' -n flowdesk)
+          kubectl patch service flowdesk-active -n flowdesk \
+            -p "{\"spec\":{\"selector\":{\"slot\":\"${ACTIVE}\"}}}"
+          echo "Rolled back to ${ACTIVE}"

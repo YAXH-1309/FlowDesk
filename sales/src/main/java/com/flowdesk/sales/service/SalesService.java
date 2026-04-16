@@ -2,7 +2,9 @@ package com.flowdesk.sales.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowdesk.core.context.TenantContext;
+import com.flowdesk.core.exception.ConflictException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.lock.DistributedLockService;
 import com.flowdesk.sales.domain.*;
 import com.flowdesk.sales.dto.*;
 import com.flowdesk.sales.outbox.SalesOutboxEvent;
@@ -28,6 +30,7 @@ public class SalesService {
     private final SalesOutboxRepository outboxRepo;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final DistributedLockService lockService;
 
     public SalesService(CustomerRepository customerRepo,
                         OpportunityRepository opportunityRepo,
@@ -35,7 +38,8 @@ public class SalesService {
                         InteractionRepository interactionRepo,
                         SalesOutboxRepository outboxRepo,
                         ObjectMapper objectMapper,
-                        ApplicationEventPublisher eventPublisher) {
+                        ApplicationEventPublisher eventPublisher,
+                        DistributedLockService lockService) {
         this.customerRepo = customerRepo;
         this.opportunityRepo = opportunityRepo;
         this.orderRepo = orderRepo;
@@ -43,6 +47,7 @@ public class SalesService {
         this.outboxRepo = outboxRepo;
         this.objectMapper = objectMapper;
         this.eventPublisher = eventPublisher;
+        this.lockService = lockService;
     }
 
     // ── Customers ─────────────────────────────────────────────────────────────
@@ -103,6 +108,11 @@ public class SalesService {
 
     @Transactional
     public SalesOrder confirmOrder(UUID orderId) {
+        String lockKey = "lock:order:" + orderId;
+        if (!lockService.tryLock(lockKey, 30)) {
+            throw new ConflictException("Order confirmation already in progress");
+        }
+        try {
         UUID tenantId = TenantContext.getTenantId();
         SalesOrder order = orderRepo.findByIdAndTenantId(orderId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
@@ -125,6 +135,9 @@ public class SalesService {
         SalesOrder saved = orderRepo.save(order);
         publishOutbox("SalesOrder", saved.getId(), "sales.order.confirmed", saved);
         return saved;
+        } finally {
+            lockService.unlock(lockKey);
+        }
     }
 
     @Transactional

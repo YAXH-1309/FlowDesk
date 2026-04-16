@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowdesk.core.audit.AuditAction;
 import com.flowdesk.core.audit.AuditLog;
 import com.flowdesk.core.context.TenantContext;
+import com.flowdesk.core.exception.ConflictException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.lock.DistributedLockService;
 import com.flowdesk.hr.domain.Attendance;
 import com.flowdesk.hr.domain.Employee;
 import com.flowdesk.hr.domain.PayrollRun;
@@ -36,6 +38,7 @@ public class HrService {
     private final PayrollRunRepository payrollRunRepo;
     private final HrOutboxRepository outboxRepo;
     private final ObjectMapper objectMapper;
+    private final DistributedLockService lockService;
 
     // In-memory payroll report cache keyed by runId
     private final Map<UUID, PayrollReport> reportCache = new ConcurrentHashMap<>();
@@ -45,13 +48,15 @@ public class HrService {
                      PerformanceReviewRepository reviewRepo,
                      PayrollRunRepository payrollRunRepo,
                      HrOutboxRepository outboxRepo,
-                     ObjectMapper objectMapper) {
+                     ObjectMapper objectMapper,
+                     DistributedLockService lockService) {
         this.employeeRepo = employeeRepo;
         this.attendanceRepo = attendanceRepo;
         this.reviewRepo = reviewRepo;
         this.payrollRunRepo = payrollRunRepo;
         this.outboxRepo = outboxRepo;
         this.objectMapper = objectMapper;
+        this.lockService = lockService;
     }
 
     // ── Employees ─────────────────────────────────────────────────────────────
@@ -107,7 +112,12 @@ public class HrService {
     @Transactional
     public PayrollReport runPayroll(PayrollRunRequest req) {
         UUID tenantId = TenantContext.getTenantId();
-        List<Employee> active = employeeRepo.findByTenantIdAndEmploymentStatus(tenantId, "ACTIVE");
+        String lockKey = "lock:payroll:" + tenantId + ":" + req.payPeriodStart();
+        if (!lockService.tryLock(lockKey, 30)) {
+            throw new ConflictException("Payroll run already in progress for this period");
+        }
+        try {
+            List<Employee> active = employeeRepo.findByTenantIdAndEmploymentStatus(tenantId, "ACTIVE");
 
         List<PayrollLineItem> lines = new ArrayList<>();
         List<UUID> skipped = new ArrayList<>();
@@ -132,6 +142,9 @@ public class HrService {
         PayrollReport report = new PayrollReport(saved.getId(), lines, skipped);
         reportCache.put(saved.getId(), report);
         return report;
+        } finally {
+            lockService.unlock(lockKey);
+        }
     }
 
     public PayrollReport getPayrollReport(UUID runId) {

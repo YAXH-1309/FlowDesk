@@ -57,6 +57,18 @@ subprojects {
         // Redis (L2 cache)
         implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+        // Redisson (distributed locks)
+        implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
+
+        // Resilience4j (circuit breakers)
+        implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+        implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+
+        // AWS SDK v2 (S3 for exports/archival)
+        implementation platform('software.amazon.awssdk:bom:2.25.0')
+        implementation 'software.amazon.awssdk:s3'
+        implementation 'software.amazon.awssdk:sts'
+
         // SpringDoc OpenAPI 3
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 
@@ -66,6 +78,10 @@ subprojects {
 
         // Logback + logstash-logback-encoder
         implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+        // OpenTelemetry tracing (Jaeger exporter)
+        implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+        implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
         // PostgreSQL driver
         runtimeOnly 'org.postgresql:postgresql'
