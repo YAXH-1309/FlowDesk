@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.auth.AuthPropertyTest" tests="4" skipped="4" failures="0" errors="0" timestamp="2026-04-16T13:05:53" hostname="DESKTOP-V1DP9AA" time="0.012">
+  <properties/>
+  <testcase name="p1 registrationProducesValidJwt" classname="com.flowdesk.auth.AuthPropertyTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="p16 passwordHashingIsIrreversible" classname="com.flowdesk.auth.AuthPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p3 refreshTokenIssuesNewJwt" classname="com.flowdesk.auth.AuthPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p2 loginIsRoundTripOfRegistration" classname="com.flowdesk.auth.AuthPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

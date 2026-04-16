@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.auth.RateLimitPropertyTest" tests="3" skipped="3" failures="0" errors="0" timestamp="2026-04-16T13:05:53" hostname="DESKTOP-V1DP9AA" time="0.003">
+  <properties/>
+  <testcase name="p10a burstBeyondLimitReceives429" classname="com.flowdesk.auth.RateLimitPropertyTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="p10c unauthenticatedRequestsUseIpLimit" classname="com.flowdesk.auth.RateLimitPropertyTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="p10b slidingWindowBoundaryOldRequestsExcluded" classname="com.flowdesk.auth.RateLimitPropertyTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

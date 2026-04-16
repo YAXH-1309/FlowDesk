@@ -2,6 +2,7 @@ package com.flowdesk.core.kafka;
 
 import net.jqwik.api.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Tag;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -35,17 +36,16 @@ class KafkaDlqPropertyTest {
     void p13_failedMessageRoutedToDlq(@ForAll("topicNames") String topic,
                                        @ForAll("payloads") String payload) {
         KafkaTemplate<String, String> kafkaTemplate = mock(KafkaTemplate.class);
-        when(kafkaTemplate.send(any())).thenReturn(null);
+        when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(null);
 
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
-
         ConsumerRecord<String, String> record = new ConsumerRecord<>(topic, 0, 42L, "key", payload);
         Exception failure = new RuntimeException("processing failed");
 
         recoverer.recover(record, failure);
 
         // Verify DLQ topic is {original}.dlq
-        verify(kafkaTemplate).send(argThat(pr ->
+        verify(kafkaTemplate).send(argThat((ProducerRecord<String, String> pr) ->
                 pr.topic().equals(topic + ".dlq") &&
                 pr.value().equals(payload)
         ));
@@ -58,14 +58,14 @@ class KafkaDlqPropertyTest {
     void p13_dlqRecordContainsOriginalTopicHeader(@ForAll("topicNames") String topic,
                                                    @ForAll("payloads") String payload) {
         KafkaTemplate<String, String> kafkaTemplate = mock(KafkaTemplate.class);
-        when(kafkaTemplate.send(any())).thenReturn(null);
+        when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(null);
 
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
         ConsumerRecord<String, String> record = new ConsumerRecord<>(topic, 1, 100L, "k", payload);
 
         recoverer.recover(record, new RuntimeException("error"));
 
-        verify(kafkaTemplate).send(argThat(pr -> {
+        verify(kafkaTemplate).send(argThat((ProducerRecord<String, String> pr) -> {
             var headers = pr.headers();
             boolean hasOriginalTopic = headers.lastHeader("original-topic") != null;
             boolean hasOriginalPartition = headers.lastHeader("original-partition") != null;
@@ -90,7 +90,6 @@ class KafkaDlqPropertyTest {
     @Property(tries = 10)
     @Tag("Feature: saas-platform, Property 13: Dead-letter routing after exhausted retries")
     void p13_exactlyThreeRetriesBeforeDlq(@ForAll("payloads") String payload) {
-        // Simulate a consumer that fails 3 times then routes to DLQ
         AtomicInteger attempts = new AtomicInteger(0);
         int maxRetries = 3;
 
@@ -98,13 +97,12 @@ class KafkaDlqPropertyTest {
         for (int i = 0; i < maxRetries + 1; i++) {
             attempts.incrementAndGet();
             if (attempts.get() > maxRetries) {
-                routed = true; // DLQ routing
+                routed = true;
                 break;
             }
-            // Simulate retry
         }
 
         assertThat(routed).isTrue();
-        assertThat(attempts.get()).isEqualTo(maxRetries + 1); // 3 retries + 1 final DLQ route
+        assertThat(attempts.get()).isEqualTo(maxRetries + 1);
     }
 }

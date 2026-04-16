@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.flowdesk.accounting.AccountingPropertyTest" tests="3" skipped="3" failures="0" errors="0" timestamp="2026-04-16T11:29:53" hostname="DESKTOP-V1DP9AA" time="0.012">
+<testsuite name="com.flowdesk.accounting.AccountingPropertyTest" tests="3" skipped="3" failures="0" errors="0" timestamp="2026-04-16T13:05:33" hostname="DESKTOP-V1DP9AA" time="0.008">
   <properties/>
-  <testcase name="p9 sumOfBalancedEntryIsAlwaysZero" classname="com.flowdesk.accounting.AccountingPropertyTest" time="0.005">
+  <testcase name="p9 sumOfBalancedEntryIsAlwaysZero" classname="com.flowdesk.accounting.AccountingPropertyTest" time="0.004">
     <skipped/>
   </testcase>
   <testcase name="p9 imbalancedEntryIsRejectedWith422" classname="com.flowdesk.accounting.AccountingPropertyTest" time="0.0">
     <skipped/>
   </testcase>
-  <testcase name="p9 balancedEntryIsAccepted" classname="com.flowdesk.accounting.AccountingPropertyTest" time="0.002">
+  <testcase name="p9 balancedEntryIsAccepted" classname="com.flowdesk.accounting.AccountingPropertyTest" time="0.0">
     <skipped/>
   </testcase>
   <system-out><![CDATA[]]></system-out>
