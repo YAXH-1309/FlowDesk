@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-04-16T13:15:46" hostname="DESKTOP-V1DP9AA" time="0.69">
+<testsuite name="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-04-16T13:18:05" hostname="DESKTOP-V1DP9AA" time="0.263">
   <properties/>
-  <testcase name="defaultContext_routesToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.484"/>
-  <testcase name="afterReadOnlyCleared_routesBackToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.005"/>
-  <testcase name="writeOperation_routesToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.003"/>
-  <testcase name="readOnlyContext_neverRoutesToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.008"/>
-  <testcase name="readOnlyOperations_roundRobinAcrossAllThreeReplicas()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.066"/>
-  <testcase name="readOnlyOperation_routesToReplica()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.004"/>
+  <testcase name="defaultContext_routesToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.213"/>
+  <testcase name="afterReadOnlyCleared_routesBackToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.002"/>
+  <testcase name="writeOperation_routesToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.002"/>
+  <testcase name="readOnlyContext_neverRoutesToPrimary()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.003"/>
+  <testcase name="readOnlyOperations_roundRobinAcrossAllThreeReplicas()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.019"/>
+  <testcase name="readOnlyOperation_routesToReplica()" classname="com.flowdesk.core.config.ReadReplicaRoutingIntegrationTest" time="0.008"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

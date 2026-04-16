@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.flowdesk.core.lock.DistributedLockService;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -36,7 +38,7 @@ class HrPropertyTest {
     private HrService buildService(EmployeeRepository empRepo) {
         return new HrService(empRepo, mock(AttendanceRepository.class),
                 mock(PerformanceReviewRepository.class), mock(PayrollRunRepository.class),
-                mock(HrOutboxRepository.class), new ObjectMapper());
+                mock(HrOutboxRepository.class), new ObjectMapper(), mock(DistributedLockService.class));
     }
 
     // ── Generators ────────────────────────────────────────────────────────────
@@ -82,7 +84,7 @@ class HrPropertyTest {
         // Inject runRepo via reflection since HrService uses it internally
         HrService service = new HrService(empRepo, mock(AttendanceRepository.class),
                 mock(PerformanceReviewRepository.class), runRepo,
-                mock(HrOutboxRepository.class), new ObjectMapper());
+                mock(HrOutboxRepository.class), new ObjectMapper(), mock(DistributedLockService.class));
 
         TenantContext.setTenantId(TENANT);
         PayrollReport report = service.runPayroll(
@@ -150,7 +152,7 @@ class HrPropertyTest {
 
         HrService service = new HrService(empRepo, mock(AttendanceRepository.class),
                 mock(PerformanceReviewRepository.class), runRepo,
-                mock(HrOutboxRepository.class), new ObjectMapper());
+                mock(HrOutboxRepository.class), new ObjectMapper(), mock(DistributedLockService.class));
 
         TenantContext.setTenantId(TENANT);
         PayrollReport report = service.runPayroll(
@@ -185,7 +187,7 @@ class HrPropertyTest {
 
         HrService service = new HrService(empRepo, mock(AttendanceRepository.class),
                 mock(PerformanceReviewRepository.class), runRepo,
-                mock(HrOutboxRepository.class), new ObjectMapper());
+                mock(HrOutboxRepository.class), new ObjectMapper(), mock(DistributedLockService.class));
 
         TenantContext.setTenantId(TENANT);
         PayrollReport report = service.runPayroll(

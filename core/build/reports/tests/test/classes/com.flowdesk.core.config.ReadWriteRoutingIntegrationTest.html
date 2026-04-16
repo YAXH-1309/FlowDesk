@@ -23,25 +23,25 @@
 <tr>
 <td>
 <div class="infoBox" id="tests">
-<div class="counter">1</div>
+<div class="counter">4</div>
 <p>tests</p>
 </div>
 </td>
 <td>
 <div class="infoBox" id="failures">
-<div class="counter">1</div>
+<div class="counter">0</div>
 <p>failures</p>
 </div>
 </td>
 <td>
 <div class="infoBox" id="ignored">
-<div class="counter">0</div>
+<div class="counter">4</div>
 <p>ignored</p>
 </div>
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">0.015s</div>
+<div class="counter">0.001s</div>
 <p>duration</p>
 </div>
 </td>
@@ -50,8 +50,8 @@
 </div>
 </td>
 <td>
-<div class="infoBox failures" id="successRate">
-<div class="percent">0%</div>
+<div class="infoBox skipped" id="successRate">
+<div class="percent">-</div>
 <p>successful</p>
 </div>
 </td>
@@ -61,85 +61,45 @@
 <div id="tabs">
 <ul class="tabLinks">
 <li>
-<a href="#tab0">Failed tests</a>
-</li>
-<li>
-<a href="#tab1">Tests</a>
-</li>
-<li>
-<a href="#tab2">Standard output</a>
+<a href="#tab0">Tests</a>
 </li>
 </ul>
 <div id="tab0" class="tab">
-<h2>Failed tests</h2>
-<div class="test">
-<a name="initializationError"></a>
-<h3 class="failures">initializationError</h3>
-<span class="code">
-<pre>java.lang.IllegalStateException: Could not find a valid Docker environment. Please see logs and check configuration
-	at org.testcontainers.dockerclient.DockerClientProviderStrategy.lambda$getFirstValidStrategy$7(DockerClientProviderStrategy.java:277)
-	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
-	at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:268)
-	at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
-	at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
-	at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
-	at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
-	at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:280)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:267)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:82)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:82)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:82)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:56)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	Suppressed: java.lang.IllegalStateException: Unable to find a @SpringBootConfiguration, you need to use @ContextConfiguration or @SpringBootTest(classes=...) with your test
-		at org.springframework.util.Assert.state(Assert.java:76)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.findConfigurationClass(SpringBootTestContextBootstrapper.java:246)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.getOrFindConfigurationClasses(SpringBootTestContextBootstrapper.java:233)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.processMergedContextConfiguration(SpringBootTestContextBootstrapper.java:150)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildMergedContextConfiguration(AbstractTestContextBootstrapper.java:351)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildDefaultMergedContextConfiguration(AbstractTestContextBootstrapper.java:267)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildMergedContextConfiguration(AbstractTestContextBootstrapper.java:215)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildTestContext(AbstractTestContextBootstrapper.java:108)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.buildTestContext(SpringBootTestContextBootstrapper.java:111)
-		at org.springframework.test.context.TestContextManager.&lt;init&gt;(TestContextManager.java:142)
-		at org.springframework.test.context.TestContextManager.&lt;init&gt;(TestContextManager.java:126)
-		at org.springframework.test.context.junit.jupiter.SpringExtension.getTestContextManager(SpringExtension.java:366)
-		at org.springframework.test.context.junit.jupiter.SpringExtension.afterAll(SpringExtension.java:142)
-		... 1 more
-</pre>
-</span>
-</div>
-</div>
-<div id="tab1" class="tab">
 <h2>Tests</h2>
 <table>
 <thead>
 <tr>
 <th>Test</th>
+<th>Method name</th>
 <th>Duration</th>
 <th>Result</th>
 </tr>
 </thead>
 <tr>
-<td class="failures">initializationError</td>
-<td class="failures">0.015s</td>
-<td class="failures">failed</td>
+<td class="skipped">ReadWriteContext defaults to write (primary) when not set</td>
+<td class="skipped">defaultContextShouldUsePrimary()</td>
+<td class="skipped">-</td>
+<td class="skipped">ignored</td>
+</tr>
+<tr>
+<td class="skipped">Read-only transaction routes to a replica data source</td>
+<td class="skipped">readOnlyShouldUseReplica()</td>
+<td class="skipped">-</td>
+<td class="skipped">ignored</td>
+</tr>
+<tr>
+<td class="skipped">Round-robin distributes read-only requests across all three replicas</td>
+<td class="skipped">roundRobinCoversAllReplicas()</td>
+<td class="skipped">-</td>
+<td class="skipped">ignored</td>
+</tr>
+<tr>
+<td class="skipped">Write transaction routes to primary data source</td>
+<td class="skipped">writeShouldUsePrimary()</td>
+<td class="skipped">-</td>
+<td class="skipped">ignored</td>
 </tr>
 </table>
-</div>
-<div id="tab2" class="tab">
-<h2>Standard output</h2>
-<span class="code">
-<pre>18:45:47.842 [Test worker] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
-18:45:47.869 [Test worker] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
-18:45:49.962 [Test worker] INFO org.testcontainers.dockerclient.DockerMachineClientProviderStrategy -- docker-machine executable was not found on PATH ([C:\Program Files\Amazon Corretto\jdk21.0.10_7\bin, C:\Program Files\Amazon Corretto\jre8\bin, C:\Program Files\Eclipse Adoptium\jre-21.0.10.7-hotspot\bin, C:\Program Files\Eclipse Adoptium\jre-17.0.18.8-hotspot\bin, C:\Program Files\Python314\Scripts\, C:\Program Files\Python314\, C:\WINDOWS\system32, C:\WINDOWS, C:\WINDOWS\System32\Wbem, C:\WINDOWS\System32\WindowsPowerShell\v1.0\, C:\WINDOWS\System32\OpenSSH\, C:\Program Files\Microsoft VS Code\bin, C:\Program Files\nodejs\, C:\ProgramData\chocolatey\bin, C:\Program Files\dotnet\, C:\Users\yaxh\AppData\Local\Microsoft\WindowsApps, C:\Users\yaxh\AppData\Roaming\npm, C:\Users\yaxh\AppData\Local\Programs\Antigravity\bin, C:\Users\yaxh\AppData\Local\Programs\Kiro\bin, C:\Users\yaxh\AppData\Local\GitHubDesktop\bin])
-18:45:49.964 [Test worker] ERROR org.testcontainers.dockerclient.DockerClientProviderStrategy -- Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
-	NpipeSocketClientProviderStrategy: failed with exception BadRequestException (Status 400: {&quot;ID&quot;:&quot;&quot;,&quot;Containers&quot;:0,&quot;ContainersRunning&quot;:0,&quot;ContainersPaused&quot;:0,&quot;ContainersStopped&quot;:0,&quot;Images&quot;:0,&quot;Driver&quot;:&quot;&quot;,&quot;DriverStatus&quot;:null,&quot;Plugins&quot;:{&quot;Volume&quot;:null,&quot;Network&quot;:null,&quot;Authorization&quot;:null,&quot;Log&quot;:null},&quot;MemoryLimit&quot;:false,&quot;SwapLimit&quot;:false,&quot;CpuCfsPeriod&quot;:false,&quot;CpuCfsQuota&quot;:false,&quot;CPUShares&quot;:false,&quot;CPUSet&quot;:false,&quot;PidsLimit&quot;:false,&quot;IPv4Forwarding&quot;:false,&quot;Debug&quot;:false,&quot;NFd&quot;:0,&quot;OomKillDisable&quot;:false,&quot;NGoroutines&quot;:0,&quot;SystemTime&quot;:&quot;&quot;,&quot;LoggingDriver&quot;:&quot;&quot;,&quot;CgroupDriver&quot;:&quot;&quot;,&quot;NEventsListener&quot;:0,&quot;KernelVersion&quot;:&quot;&quot;,&quot;OperatingSystem&quot;:&quot;&quot;,&quot;OSVersion&quot;:&quot;&quot;,&quot;OSType&quot;:&quot;&quot;,&quot;Architecture&quot;:&quot;&quot;,&quot;IndexServerAddress&quot;:&quot;&quot;,&quot;RegistryConfig&quot;:null,&quot;NCPU&quot;:0,&quot;MemTotal&quot;:0,&quot;GenericResources&quot;:null,&quot;DockerRootDir&quot;:&quot;&quot;,&quot;HttpProxy&quot;:&quot;&quot;,&quot;HttpsProxy&quot;:&quot;&quot;,&quot;NoProxy&quot;:&quot;&quot;,&quot;Name&quot;:&quot;&quot;,&quot;Labels&quot;:[&quot;com.docker.desktop.address=npipe://\\\\.\\pipe\\docker_cli&quot;],&quot;ExperimentalBuild&quot;:false,&quot;ServerVersion&quot;:&quot;&quot;,&quot;Runtimes&quot;:null,&quot;DefaultRuntime&quot;:&quot;&quot;,&quot;Swarm&quot;:{&quot;NodeID&quot;:&quot;&quot;,&quot;NodeAddr&quot;:&quot;&quot;,&quot;LocalNodeState&quot;:&quot;&quot;,&quot;ControlAvailable&quot;:false,&quot;Error&quot;:&quot;&quot;,&quot;RemoteManagers&quot;:null},&quot;LiveRestoreEnabled&quot;:false,&quot;Isolation&quot;:&quot;&quot;,&quot;InitBinary&quot;:&quot;&quot;,&quot;ContainerdCommit&quot;:{&quot;ID&quot;:&quot;&quot;},&quot;RuncCommit&quot;:{&quot;ID&quot;:&quot;&quot;},&quot;InitCommit&quot;:{&quot;ID&quot;:&quot;&quot;},&quot;SecurityOptions&quot;:null,&quot;CDISpecDirs&quot;:null,&quot;Warnings&quot;:null})As no valid configuration was found, execution cannot continue.
-See https://java.testcontainers.org/on_failure.html for more details.
-</pre>
-</span>
 </div>
 </div>
 <div id="footer">
@@ -149,7 +109,7 @@ See https://java.testcontainers.org/on_failure.html for more details.
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="http://www.gradle.org">Gradle 8.7</a> at Apr 16, 2026, 6:45:53 PM</p>
+<a href="http://www.gradle.org">Gradle 8.7</a> at Apr 16, 2026, 6:48:06 PM</p>
 </div>
 </div>
 </body>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.hr.HrPropertyTest" tests="3" skipped="3" failures="0" errors="0" timestamp="2026-04-16T13:24:03" hostname="DESKTOP-V1DP9AA" time="0.055">
+  <properties/>
+  <testcase name="p20 employeesWithMissingSalaryAreSkipped" classname="com.flowdesk.hr.HrPropertyTest" time="0.005">
+    <skipped/>
+  </testcase>
+  <testcase name="p20 netPayEqualsGrossMinusDeductions" classname="com.flowdesk.hr.HrPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p20 deductionRateIsConsistent" classname="com.flowdesk.hr.HrPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

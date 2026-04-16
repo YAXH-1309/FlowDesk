@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.flowdesk.core.lock.DistributedLockService;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -42,7 +44,8 @@ class InventoryPropertyTest {
     private InventoryService buildService(SkuRepository skuRepo, StockRepository stockRepo,
                                            InventoryOutboxRepository outboxRepo) {
         return new InventoryService(skuRepo, stockRepo,
-                mock(PurchaseOrderRepository.class), outboxRepo, new ObjectMapper());
+                mock(PurchaseOrderRepository.class), outboxRepo, new ObjectMapper(),
+                mock(DistributedLockService.class));
     }
 
     // ── Generators ────────────────────────────────────────────────────────────

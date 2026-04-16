@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.flowdesk.core.audit.AuditLogPropertyTest" tests="4" skipped="4" failures="0" errors="0" timestamp="2026-04-16T13:15:52" hostname="DESKTOP-V1DP9AA" time="0.008">
+<testsuite name="com.flowdesk.core.audit.AuditLogPropertyTest" tests="4" skipped="4" failures="0" errors="0" timestamp="2026-04-16T13:18:05" hostname="DESKTOP-V1DP9AA" time="0.003">
   <properties/>
   <testcase name="p15 allCrudActionsProduceAuditEntries" classname="com.flowdesk.core.audit.AuditLogPropertyTest" time="0.001">
     <skipped/>
   </testcase>
-  <testcase name="p15 auditEntryContainsAllRequiredFields" classname="com.flowdesk.core.audit.AuditLogPropertyTest" time="0.001">
+  <testcase name="p15 auditEntryContainsAllRequiredFields" classname="com.flowdesk.core.audit.AuditLogPropertyTest" time="0.0">
     <skipped/>
   </testcase>
   <testcase name="p15 auditEntryTimestampIsAlwaysSet" classname="com.flowdesk.core.audit.AuditLogPropertyTest" time="0.0">

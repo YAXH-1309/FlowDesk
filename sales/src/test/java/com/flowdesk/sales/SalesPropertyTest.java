@@ -31,6 +31,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.flowdesk.core.lock.DistributedLockService;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -78,7 +80,8 @@ class SalesPropertyTest {
         });
 
         return new SalesService(customerRepo, opportunityRepo, orderRepo,
-                interactionRepo, outboxRepo, new ObjectMapper(), publisher);
+                interactionRepo, outboxRepo, new ObjectMapper(), publisher,
+                mock(DistributedLockService.class));
     }
 
     // ── Generators ────────────────────────────────────────────────────────────
@@ -153,7 +156,7 @@ class SalesPropertyTest {
 
         SalesService service = new SalesService(customerRepo, opportunityRepo, orderRepo,
                 mock(InteractionRepository.class), outboxRepo, new ObjectMapper(),
-                mock(ApplicationEventPublisher.class));
+                mock(ApplicationEventPublisher.class), mock(DistributedLockService.class));
 
         setTenant();
         SalesOrder result = service.confirmOrder(orderId);
@@ -209,7 +212,7 @@ class SalesPropertyTest {
 
         SalesService service = new SalesService(customerRepo, mock(OpportunityRepository.class),
                 orderRepo, mock(InteractionRepository.class), outboxRepo, new ObjectMapper(),
-                mock(ApplicationEventPublisher.class));
+                mock(ApplicationEventPublisher.class), mock(DistributedLockService.class));
 
         setTenant();
         SalesOrder result = service.confirmOrder(orderId);
@@ -263,7 +266,7 @@ class SalesPropertyTest {
 
         SalesService service = new SalesService(mock(CustomerRepository.class), opportunityRepo,
                 orderRepo, mock(InteractionRepository.class), mock(SalesOutboxRepository.class),
-                new ObjectMapper(), publisher);
+                new ObjectMapper(), publisher, mock(DistributedLockService.class));
         serviceRef.set(service);
 
         setTenant();
@@ -315,7 +318,7 @@ class SalesPropertyTest {
 
         SalesService service = new SalesService(mock(CustomerRepository.class), opportunityRepo,
                 mock(SalesOrderRepository.class), mock(InteractionRepository.class),
-                mock(SalesOutboxRepository.class), new ObjectMapper(), publisher);
+                mock(SalesOutboxRepository.class), new ObjectMapper(), publisher, mock(DistributedLockService.class));
 
         setTenant();
         service.updateOpportunity(opportunityId, new CreateOpportunityRequest(customerId, stage, null));

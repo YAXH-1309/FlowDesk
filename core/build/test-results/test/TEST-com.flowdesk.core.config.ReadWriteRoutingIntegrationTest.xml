@@ -1,47 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-04-16T13:15:51" hostname="DESKTOP-V1DP9AA" time="0.015">
+<testsuite name="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" tests="4" skipped="4" failures="0" errors="0" timestamp="2026-04-16T13:18:05" hostname="DESKTOP-V1DP9AA" time="0.008">
   <properties/>
-  <testcase name="initializationError" classname="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" time="0.015">
-    <failure message="java.lang.IllegalStateException: Could not find a valid Docker environment. Please see logs and check configuration" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Could not find a valid Docker environment. Please see logs and check configuration
-	at org.testcontainers.dockerclient.DockerClientProviderStrategy.lambda$getFirstValidStrategy$7(DockerClientProviderStrategy.java:277)
-	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
-	at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:268)
-	at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
-	at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
-	at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
-	at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
-	at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:280)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:267)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:82)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:82)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:82)
-	at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:56)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	Suppressed: java.lang.IllegalStateException: Unable to find a @SpringBootConfiguration, you need to use @ContextConfiguration or @SpringBootTest(classes=...) with your test
-		at org.springframework.util.Assert.state(Assert.java:76)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.findConfigurationClass(SpringBootTestContextBootstrapper.java:246)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.getOrFindConfigurationClasses(SpringBootTestContextBootstrapper.java:233)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.processMergedContextConfiguration(SpringBootTestContextBootstrapper.java:150)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildMergedContextConfiguration(AbstractTestContextBootstrapper.java:351)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildDefaultMergedContextConfiguration(AbstractTestContextBootstrapper.java:267)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildMergedContextConfiguration(AbstractTestContextBootstrapper.java:215)
-		at org.springframework.test.context.support.AbstractTestContextBootstrapper.buildTestContext(AbstractTestContextBootstrapper.java:108)
-		at org.springframework.boot.test.context.SpringBootTestContextBootstrapper.buildTestContext(SpringBootTestContextBootstrapper.java:111)
-		at org.springframework.test.context.TestContextManager.&lt;init&gt;(TestContextManager.java:142)
-		at org.springframework.test.context.TestContextManager.&lt;init&gt;(TestContextManager.java:126)
-		at org.springframework.test.context.junit.jupiter.SpringExtension.getTestContextManager(SpringExtension.java:366)
-		at org.springframework.test.context.junit.jupiter.SpringExtension.afterAll(SpringExtension.java:142)
-		... 1 more
-</failure>
+  <testcase name="Read-only transaction routes to a replica data source" classname="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" time="0.001">
+    <skipped/>
   </testcase>
-  <system-out><![CDATA[18:45:47.842 [Test worker] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
-18:45:47.869 [Test worker] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
-18:45:49.962 [Test worker] INFO org.testcontainers.dockerclient.DockerMachineClientProviderStrategy -- docker-machine executable was not found on PATH ([C:\Program Files\Amazon Corretto\jdk21.0.10_7\bin, C:\Program Files\Amazon Corretto\jre8\bin, C:\Program Files\Eclipse Adoptium\jre-21.0.10.7-hotspot\bin, C:\Program Files\Eclipse Adoptium\jre-17.0.18.8-hotspot\bin, C:\Program Files\Python314\Scripts\, C:\Program Files\Python314\, C:\WINDOWS\system32, C:\WINDOWS, C:\WINDOWS\System32\Wbem, C:\WINDOWS\System32\WindowsPowerShell\v1.0\, C:\WINDOWS\System32\OpenSSH\, C:\Program Files\Microsoft VS Code\bin, C:\Program Files\nodejs\, C:\ProgramData\chocolatey\bin, C:\Program Files\dotnet\, C:\Users\yaxh\AppData\Local\Microsoft\WindowsApps, C:\Users\yaxh\AppData\Roaming\npm, C:\Users\yaxh\AppData\Local\Programs\Antigravity\bin, C:\Users\yaxh\AppData\Local\Programs\Kiro\bin, C:\Users\yaxh\AppData\Local\GitHubDesktop\bin])
-18:45:49.964 [Test worker] ERROR org.testcontainers.dockerclient.DockerClientProviderStrategy -- Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
-	NpipeSocketClientProviderStrategy: failed with exception BadRequestException (Status 400: {"ID":"","Containers":0,"ContainersRunning":0,"ContainersPaused":0,"ContainersStopped":0,"Images":0,"Driver":"","DriverStatus":null,"Plugins":{"Volume":null,"Network":null,"Authorization":null,"Log":null},"MemoryLimit":false,"SwapLimit":false,"CpuCfsPeriod":false,"CpuCfsQuota":false,"CPUShares":false,"CPUSet":false,"PidsLimit":false,"IPv4Forwarding":false,"Debug":false,"NFd":0,"OomKillDisable":false,"NGoroutines":0,"SystemTime":"","LoggingDriver":"","CgroupDriver":"","NEventsListener":0,"KernelVersion":"","OperatingSystem":"","OSVersion":"","OSType":"","Architecture":"","IndexServerAddress":"","RegistryConfig":null,"NCPU":0,"MemTotal":0,"GenericResources":null,"DockerRootDir":"","HttpProxy":"","HttpsProxy":"","NoProxy":"","Name":"","Labels":["com.docker.desktop.address=npipe://\\\\.\\pipe\\docker_cli"],"ExperimentalBuild":false,"ServerVersion":"","Runtimes":null,"DefaultRuntime":"","Swarm":{"NodeID":"","NodeAddr":"","LocalNodeState":"","ControlAvailable":false,"Error":"","RemoteManagers":null},"LiveRestoreEnabled":false,"Isolation":"","InitBinary":"","ContainerdCommit":{"ID":""},"RuncCommit":{"ID":""},"InitCommit":{"ID":""},"SecurityOptions":null,"CDISpecDirs":null,"Warnings":null})As no valid configuration was found, execution cannot continue.
-See https://java.testcontainers.org/on_failure.html for more details.
-]]></system-out>
+  <testcase name="ReadWriteContext defaults to write (primary) when not set" classname="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="Write transaction routes to primary data source" classname="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="Round-robin distributes read-only requests across all three replicas" classname="com.flowdesk.core.config.ReadWriteRoutingIntegrationTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
