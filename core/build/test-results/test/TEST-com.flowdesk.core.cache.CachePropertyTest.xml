@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.core.cache.CachePropertyTest" tests="6" skipped="6" failures="0" errors="0" timestamp="2026-04-16T13:15:52" hostname="DESKTOP-V1DP9AA" time="0.012">
+  <properties/>
+  <testcase name="p12 evictRemovesFromL1" classname="com.flowdesk.core.cache.CachePropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p12 evictWithRedisFailureDoesNotThrow" classname="com.flowdesk.core.cache.CachePropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p11 l1HitSkipsRedisAndDb" classname="com.flowdesk.core.cache.CachePropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p11 redisFailureDoesNotPropagateError" classname="com.flowdesk.core.cache.CachePropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p11 fullMissCallsDb" classname="com.flowdesk.core.cache.CachePropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p11 l2HitSkipsDb" classname="com.flowdesk.core.cache.CachePropertyTest" time="0.003">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

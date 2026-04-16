@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.core.outbox.OutboxPropertyTest" tests="4" skipped="4" failures="0" errors="0" timestamp="2026-04-16T13:15:52" hostname="DESKTOP-V1DP9AA" time="0.008">
+  <properties/>
+  <testcase name="p14 outboxEventHasRequiredFields" classname="com.flowdesk.core.outbox.OutboxPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p14 outboxEntryCreatedWithBusinessWrite" classname="com.flowdesk.core.outbox.OutboxPropertyTest" time="0.002">
+    <skipped/>
+  </testcase>
+  <testcase name="p14 publishedEventHasTimestamp" classname="com.flowdesk.core.outbox.OutboxPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p14 rollbackMeansNeitherWriteNorOutbox" classname="com.flowdesk.core.outbox.OutboxPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

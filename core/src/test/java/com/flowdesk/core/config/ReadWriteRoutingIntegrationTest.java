@@ -25,6 +25,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+
 /**
  * Integration test verifying that read-only transactions are routed to a replica
  * data source and write transactions are routed to the primary.
@@ -38,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest(classes = ReadWriteRoutingIntegrationTest.TestConfig.class)
 @EnableAutoConfiguration(exclude = {FlywayAutoConfiguration.class, KafkaAutoConfiguration.class})
+@DisabledIfSystemProperty(named = "testcontainers.disabled", matches = "true")
 class ReadWriteRoutingIntegrationTest {
 
     @Container
@@ -46,6 +51,15 @@ class ReadWriteRoutingIntegrationTest {
 
     /** Captures the routing keys chosen during each test. */
     static final List<Object> capturedKeys = new ArrayList<>();
+
+    @BeforeAll
+    static void checkDockerAvailable() {
+        try {
+            POSTGRES.getDockerClient();
+        } catch (Exception e) {
+            Assumptions.assumeTrue(false, "Docker not available — skipping Testcontainers test");
+        }
+    }
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {

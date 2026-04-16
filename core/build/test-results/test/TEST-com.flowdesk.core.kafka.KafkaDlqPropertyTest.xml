@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.core.kafka.KafkaDlqPropertyTest" tests="4" skipped="4" failures="0" errors="0" timestamp="2026-04-16T13:15:52" hostname="DESKTOP-V1DP9AA" time="0.005">
+  <properties/>
+  <testcase name="p13 failedMessageRoutedToDlq" classname="com.flowdesk.core.kafka.KafkaDlqPropertyTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="p13 dlqTopicNameFollowsConvention" classname="com.flowdesk.core.kafka.KafkaDlqPropertyTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="p13 exactlyThreeRetriesBeforeDlq" classname="com.flowdesk.core.kafka.KafkaDlqPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p13 dlqRecordContainsOriginalTopicHeader" classname="com.flowdesk.core.kafka.KafkaDlqPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
