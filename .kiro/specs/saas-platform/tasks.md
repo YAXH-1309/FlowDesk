@@ -237,7 +237,7 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
     - Store in `MDC` (Mapped Diagnostic Context) so it appears in every log line for that request
     - Forward the header downstream and include it in all API responses
     - _Requirements: 17.1, 17.3_
-  - [ ] 16.6 Add gateway-level request logging and metrics
+  - [~] 16.6 Add gateway-level request logging and metrics
     - Log every inbound request at INFO level: method, path, tenant ID, correlation ID, response status, and latency
     - Register Micrometer meters at the gateway filter: `http.server.requests` tagged by module, method, and status
     - _Requirements: 17.1, 17.4_
