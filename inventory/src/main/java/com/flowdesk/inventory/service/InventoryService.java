@@ -5,6 +5,7 @@ import com.flowdesk.core.context.TenantContext;
 import com.flowdesk.core.exception.BusinessRuleException;
 import com.flowdesk.core.exception.ConflictException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.kafka.events.LowStockEvent;
 import com.flowdesk.core.lock.DistributedLockService;
 import com.flowdesk.inventory.domain.PoLineItem;
 import com.flowdesk.inventory.domain.PurchaseOrder;
@@ -84,9 +85,13 @@ public class InventoryService {
 
         // Publish low-stock event if threshold crossed
         if (saved.getQuantityOnHand() <= sku.getReorderThreshold()) {
-            publishOutbox("Stock", skuId, "inventory.low-stock",
-                    java.util.Map.of("skuId", skuId, "quantityOnHand", saved.getQuantityOnHand(),
-                            "reorderThreshold", sku.getReorderThreshold()));
+            LowStockEvent lowStockEvent = new LowStockEvent();
+            lowStockEvent.setSkuId(skuId);
+            lowStockEvent.setTenantId(tenantId);
+            lowStockEvent.setWarehouseId(req.warehouseId());
+            lowStockEvent.setQuantityOnHand(saved.getQuantityOnHand());
+            lowStockEvent.setReorderThreshold(sku.getReorderThreshold());
+            publishOutbox("Stock", skuId, "inventory.low-stock", lowStockEvent);
         }
         return saved;
         } finally {

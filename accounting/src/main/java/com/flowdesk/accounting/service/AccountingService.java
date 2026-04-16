@@ -9,6 +9,7 @@ import com.flowdesk.accounting.repository.*;
 import com.flowdesk.core.context.TenantContext;
 import com.flowdesk.core.exception.BusinessRuleException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.kafka.events.InvoiceOverdueEvent;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -168,7 +169,14 @@ public class AccountingService {
         arRepo.findOverdue(java.time.LocalDate.now()).forEach(invoice -> {
             invoice.setStatus("OVERDUE");
             arRepo.save(invoice);
-            publishOutbox("ArInvoice", invoice.getId(), "accounting.invoice.overdue", invoice);
+            InvoiceOverdueEvent event = new InvoiceOverdueEvent();
+            event.setInvoiceId(invoice.getId());
+            event.setTenantId(invoice.getTenantId());
+            event.setCustomerId(invoice.getCustomerId());
+            event.setAmount(invoice.getAmount());
+            event.setDueDate(invoice.getDueDate());
+            event.setStatus("OVERDUE");
+            publishOutbox("ArInvoice", invoice.getId(), "accounting.invoice.overdue", event);
         });
     }
 

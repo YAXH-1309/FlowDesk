@@ -6,6 +6,8 @@ import com.flowdesk.core.audit.AuditLog;
 import com.flowdesk.core.context.TenantContext;
 import com.flowdesk.core.exception.ConflictException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.kafka.events.EmployeeChangedEvent;
+import com.flowdesk.core.kafka.events.ReviewSubmittedEvent;
 import com.flowdesk.core.lock.DistributedLockService;
 import com.flowdesk.hr.domain.Attendance;
 import com.flowdesk.hr.domain.Employee;
@@ -73,7 +75,7 @@ public class HrService {
         emp.setBaseSalary(req.baseSalary());
         emp.setCurrency(req.currency());
         Employee saved = employeeRepo.save(emp);
-        publishOutbox("Employee", saved.getId(), "hr.employee.changed", saved);
+        publishOutbox("Employee", saved.getId(), "hr.employee.changed", toEmployeeChangedEvent(saved));
         return saved;
     }
 
@@ -89,7 +91,7 @@ public class HrService {
         emp.setBaseSalary(req.baseSalary());
         emp.setCurrency(req.currency());
         Employee saved = employeeRepo.save(emp);
-        publishOutbox("Employee", saved.getId(), "hr.employee.changed", saved);
+        publishOutbox("Employee", saved.getId(), "hr.employee.changed", toEmployeeChangedEvent(saved));
         return saved;
     }
 
@@ -164,7 +166,7 @@ public class HrService {
         review.setReviewPeriod(req.reviewPeriod());
         review.setRating(req.rating());
         PerformanceReview saved = reviewRepo.save(review);
-        publishOutbox("PerformanceReview", saved.getId(), "hr.review.submitted", saved);
+        publishOutbox("PerformanceReview", saved.getId(), "hr.review.submitted", toReviewSubmittedEvent(saved));
         return saved;
     }
 
@@ -181,5 +183,33 @@ public class HrService {
         } catch (Exception e) {
             // Log but don't fail the business transaction
         }
+    }
+
+    // ── Event schema mappers ──────────────────────────────────────────────────
+
+    private EmployeeChangedEvent toEmployeeChangedEvent(Employee emp) {
+        EmployeeChangedEvent event = new EmployeeChangedEvent();
+        event.setEmployeeId(emp.getId());
+        event.setTenantId(emp.getTenantId());
+        event.setFullName(emp.getFullName());
+        event.setDepartment(emp.getDepartment());
+        event.setJobTitle(emp.getJobTitle());
+        event.setEmploymentStatus(emp.getEmploymentStatus());
+        event.setStartDate(emp.getStartDate());
+        event.setBaseSalary(emp.getBaseSalary());
+        event.setCurrency(emp.getCurrency());
+        return event;
+    }
+
+    private ReviewSubmittedEvent toReviewSubmittedEvent(PerformanceReview review) {
+        ReviewSubmittedEvent event = new ReviewSubmittedEvent();
+        event.setReviewId(review.getId());
+        event.setTenantId(review.getTenantId());
+        event.setEmployeeId(review.getEmployeeId());
+        event.setReviewerId(review.getReviewerId());
+        event.setReviewPeriod(review.getReviewPeriod());
+        event.setRating(review.getRating());
+        event.setSubmittedAt(review.getSubmittedAt());
+        return event;
     }
 }

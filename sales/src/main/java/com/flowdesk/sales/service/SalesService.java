@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowdesk.core.context.TenantContext;
 import com.flowdesk.core.exception.ConflictException;
 import com.flowdesk.core.exception.ResourceNotFoundException;
+import com.flowdesk.core.kafka.events.CreditHoldEvent;
+import com.flowdesk.core.kafka.events.OrderConfirmedEvent;
 import com.flowdesk.core.lock.DistributedLockService;
 import com.flowdesk.sales.domain.*;
 import com.flowdesk.sales.dto.*;
@@ -127,13 +129,26 @@ public class SalesService {
         if (projected.compareTo(customer.getCreditLimit()) > 0) {
             order.setCreditHold(true);
             SalesOrder saved = orderRepo.save(order);
-            publishOutbox("SalesOrder", saved.getId(), "sales.credit-hold", saved);
+            CreditHoldEvent creditHoldEvent = new CreditHoldEvent();
+            creditHoldEvent.setOrderId(saved.getId());
+            creditHoldEvent.setTenantId(saved.getTenantId());
+            creditHoldEvent.setCustomerId(saved.getCustomerId());
+            creditHoldEvent.setTotalAmount(saved.getTotalAmount());
+            creditHoldEvent.setCreditHold(true);
+            publishOutbox("SalesOrder", saved.getId(), "sales.credit-hold", creditHoldEvent);
             return saved;
         }
 
         order.setStatus("CONFIRMED");
         SalesOrder saved = orderRepo.save(order);
-        publishOutbox("SalesOrder", saved.getId(), "sales.order.confirmed", saved);
+        OrderConfirmedEvent orderConfirmedEvent = new OrderConfirmedEvent();
+        orderConfirmedEvent.setOrderId(saved.getId());
+        orderConfirmedEvent.setTenantId(saved.getTenantId());
+        orderConfirmedEvent.setCustomerId(saved.getCustomerId());
+        orderConfirmedEvent.setOpportunityId(saved.getOpportunityId());
+        orderConfirmedEvent.setTotalAmount(saved.getTotalAmount());
+        orderConfirmedEvent.setStatus(saved.getStatus());
+        publishOutbox("SalesOrder", saved.getId(), "sales.order.confirmed", orderConfirmedEvent);
         return saved;
         } finally {
             lockService.unlock(lockKey);
