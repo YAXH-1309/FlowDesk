@@ -319,12 +319,12 @@ Implement the Flowdesk Pro modular monolith in Java (Spring Boot) with a React f
 
 ## Optional Advanced Tasks
 
-- [-] A1. CQRS for Reporting module
+- [x] A1. CQRS for Reporting module
   - Implement separate write model (PostgreSQL) and read model (Elasticsearch or materialized views) for the Reporting module
   - Write path: domain events update the read model asynchronously via Kafka consumers
   - Read path: all `GET /api/v1/reporting/...` queries hit the read model only
 
-- [ ] A2. Event versioning for Kafka schemas
+- [-] A2. Event versioning for Kafka schemas
   - Add a `version` integer field to all Kafka event schemas (default: 1)
   - Implement a `VersionedEventDeserializer` that routes to the correct handler based on version
   - Document upgrade path for each event type when schema changes are needed

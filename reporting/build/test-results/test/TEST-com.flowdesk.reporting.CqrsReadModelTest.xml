@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.flowdesk.reporting.CqrsReadModelTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-04-16T13:26:48" hostname="DESKTOP-V1DP9AA" time="5.364">
+<testsuite name="com.flowdesk.reporting.CqrsReadModelTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-04-16T13:35:45" hostname="DESKTOP-V1DP9AA" time="3.83">
   <properties/>
-  <testcase name="overdueInvoiceEvent_indexesInvoiceWithOverdueStatus()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="4.972"/>
-  <testcase name="creditHoldEvent_updatesOrderStatusToCreditHold()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.017"/>
-  <testcase name="lowStockEvent_indexesSkuWithLowStockStatus()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.039"/>
-  <testcase name="auditEvent_indexesAuditEntry()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.034"/>
-  <testcase name="orderConfirmedEvent_indexesOrderWithConfirmedStatus()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.01"/>
-  <testcase name="malformedPayload_throwsRuntimeException()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.117"/>
-  <testcase name="employeeChangedEvent_indexesEmployeeInReadModel()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.049"/>
-  <testcase name="unknownTopic_doesNotUpsert()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.016"/>
-  <system-out><![CDATA[18:56:54.052 [Test worker] ERROR com.flowdesk.reporting.consumer.ReportingDomainEventConsumer -- Failed to process domain event from topic=hr.employee.changed: Unrecognized token 'not': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
+  <testcase name="overdueInvoiceEvent_indexesInvoiceWithOverdueStatus()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="3.554"/>
+  <testcase name="creditHoldEvent_updatesOrderStatusToCreditHold()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.011"/>
+  <testcase name="lowStockEvent_indexesSkuWithLowStockStatus()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.048"/>
+  <testcase name="auditEvent_indexesAuditEntry()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.049"/>
+  <testcase name="orderConfirmedEvent_indexesOrderWithConfirmedStatus()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.006"/>
+  <testcase name="malformedPayload_throwsRuntimeException()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.079"/>
+  <testcase name="employeeChangedEvent_indexesEmployeeInReadModel()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.012"/>
+  <testcase name="unknownTopic_doesNotUpsert()" classname="com.flowdesk.reporting.CqrsReadModelTest" time="0.014"/>
+  <system-out><![CDATA[19:05:48.740 [Test worker] ERROR com.flowdesk.reporting.consumer.ReportingDomainEventConsumer -- Failed to process domain event from topic=hr.employee.changed: Unrecognized token 'not': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
  at [Source: (String)"not-valid-json{{{"; line: 1, column: 4]
 com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'not': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
  at [Source: (String)"not-valid-json{{{"; line: 1, column: 4]
@@ -109,7 +109,7 @@ com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'not': was exp
 	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
-18:56:54.282 [Test worker] WARN com.flowdesk.reporting.consumer.ReportingDomainEventConsumer -- No read model mapping for topic: unknown.topic
+19:05:48.833 [Test worker] WARN com.flowdesk.reporting.consumer.ReportingDomainEventConsumer -- No read model mapping for topic: unknown.topic
 ]]></system-out>
   <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (C:\Users\yaxh\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.14.13\979ce25f7d3096a2e82214ba7dc972a05ce7a171\byte-buddy-agent-1.14.13.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
