@@ -1,5 +1,6 @@
 package com.flowdesk.sales.controller;
 
+import com.flowdesk.core.idempotency.IdempotencyRequired;
 import com.flowdesk.sales.domain.*;
 import com.flowdesk.sales.dto.*;
 import com.flowdesk.sales.service.SalesService;
@@ -39,6 +40,7 @@ public class SalesController {
 
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
+    @IdempotencyRequired
     public SalesOrder createOrder(@Valid @RequestBody CreateOrderRequest req) {
         return salesService.createOrder(req);
     }

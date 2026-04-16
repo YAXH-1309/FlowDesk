@@ -1,5 +1,6 @@
 package com.flowdesk.inventory.controller;
 
+import com.flowdesk.core.idempotency.IdempotencyRequired;
 import com.flowdesk.inventory.domain.PurchaseOrder;
 import com.flowdesk.inventory.domain.Sku;
 import com.flowdesk.inventory.domain.Stock;
@@ -30,6 +31,7 @@ public class InventoryController {
     }
 
     @PutMapping("/skus/{skuId}/stock")
+    @IdempotencyRequired
     public Stock adjustStock(@PathVariable UUID skuId,
                              @Valid @RequestBody AdjustStockRequest req) {
         return inventoryService.adjustStock(skuId, req);

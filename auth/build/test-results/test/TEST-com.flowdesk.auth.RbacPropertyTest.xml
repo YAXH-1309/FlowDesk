@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.flowdesk.auth.RbacPropertyTest" tests="7" skipped="7" failures="0" errors="0" timestamp="2026-04-16T12:24:08" hostname="DESKTOP-V1DP9AA" time="0.016">
+  <properties/>
+  <testcase name="p4f unauthenticatedRequestIsDenied" classname="com.flowdesk.auth.RbacPropertyTest" time="0.005">
+    <skipped/>
+  </testcase>
+  <testcase name="p4g userWithMultipleRolesAllowedIfAnyMatches" classname="com.flowdesk.auth.RbacPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p4c viewerAlwaysDeniedOnNonViewerEndpoints" classname="com.flowdesk.auth.RbacPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p4d viewerBlockedFromWriteOperations" classname="com.flowdesk.auth.RbacPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p4b userLackingRequiredRoleIsDenied" classname="com.flowdesk.auth.RbacPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p4a userWithRequiredRoleIsAllowed" classname="com.flowdesk.auth.RbacPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="p4e nonViewerRolesPassWriteGuard" classname="com.flowdesk.auth.RbacPropertyTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,5 +1,6 @@
 package com.flowdesk.hr.controller;
 
+import com.flowdesk.core.idempotency.IdempotencyRequired;
 import com.flowdesk.hr.domain.Attendance;
 import com.flowdesk.hr.domain.Employee;
 import com.flowdesk.hr.domain.PerformanceReview;
@@ -41,6 +42,7 @@ public class HrController {
 
     @PostMapping("/payroll/run")
     @ResponseStatus(HttpStatus.CREATED)
+    @IdempotencyRequired
     public PayrollReport runPayroll(@Valid @RequestBody PayrollRunRequest req) {
         return hrService.runPayroll(req);
     }
